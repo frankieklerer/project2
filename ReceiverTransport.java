@@ -14,6 +14,7 @@ public class ReceiverTransport
     // 2 = pkt received and ack sent
     private ArrayList<Message> msglist = new ArrayList<Message>(50); 
     //for tcp to buffer out or order messages 
+    private int gbnwindow;
 
     //how do you deliver messages to upper layer??
 
@@ -26,6 +27,7 @@ public class ReceiverTransport
     public void initialize()
     {
         pktlist.add(1);
+        gbnwindow = 0;
     }
 
     public void receiveMessage(Packet pkt)
@@ -41,44 +43,44 @@ public class ReceiverTransport
                 // nl.sendPacket(p, Event.SENDER);
                 // System.out.println("Ack sent for packet " + seqnum);
 
-            if(pkt.isCorrupt()) //corrupt option not working--always says corrupt. 
+            if(pkt.isCorrupt()) 
             { //if pkt is corrupt, resend ack for highest pkt received 
               //  System.out.println("Packet received is corrupt, sending ack for highest in order packet");
-                for(int i = pktlist.size(); i > 0; i--)
-                {
-                    if(pktlist.get(i) == 2)
+                if(gbnwindow == 0)
                     {
-                        Packet resend = new Packet(new Message(" "), -1, i);
-                        nl.sendPacket(resend, Event.SENDER);
-                        System.out.println("Ack for " + i + " is resent");
+                        Packet p6 = new Packet(new Message(" "), -1, 0);
+                        nl.sendPacket(p6, Event.SENDER);
                     }
-                }
+                Packet p2 = new Packet(new Message(" "), -1, gbnwindow-1);
+                nl.sendPacket(p2, Event.SENDER);
+                System.out.println("Packet is corrupt, resend ack highest in order packet: " + (gbnwindow-1));
             }
             else
             {//send ack for pkt recieved
-                int seqnum = pkt.getSeqnum();
-                if(pktlist.get(seqnum) == 1)
+                int seqnum = pkt.getSeqnum(); 
+                if(gbnwindow == seqnum)
                 {
-                    Packet p = new Packet(new Message(" "), -1, seqnum);
+                    Packet p = new Packet(pkt.getMessage(), -1, seqnum);
                     nl.sendPacket(p, Event.SENDER);
+                    gbnwindow++;
+                    msglist.add(pkt.getMessage());
                     System.out.println("Ack sent for packet " + seqnum);
                     pktlist.set(seqnum,2);
                     pktlist.add(1);
                 }
                 else
                 {
-                    for(int i = 0; i < pktlist.size(); i++)
+                    if(gbnwindow == 0)
                     {
-                        if(pktlist.get(i) == 1)
-                        {
-                            System.out.println("Resend ack highest in order packet: " + i);
-                        }
-
+                        Packet p3 = new Packet(new Message(" "), -1, 0);
+                        nl.sendPacket(p3, Event.SENDER);
                     }
+                    Packet p4 = new Packet(msglist.get(gbnwindow-1), -1, gbnwindow-1);
+                    nl.sendPacket(p4, Event.SENDER);
+                    System.out.println("Out of Order Pkt receieved, resend ack for highest in order packet: " + (gbnwindow-1));
                 }
-                
-            }
-        }        
+            }       
+        }      
     }
 
     public void setProtocol(int n)

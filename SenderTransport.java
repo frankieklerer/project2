@@ -39,13 +39,14 @@ public class SenderTransport
 
     public void sendMessage(Message msg)
     {
-        moveWindow();
+        
         if(usingTCP)
         {
 
         }
         else
         {
+            moveWindow();
             boolean full = true;
             for(int i = 0; i < pktlist.size(); i++)
             {
@@ -101,7 +102,7 @@ public class SenderTransport
                 System.out.println("Ack received for packet " + a);
                 for(int i = 0; i < a; i++) //accounts for cumulative acks
                 {
-                    if(pktlist.get(i) == 2) 
+                    if(pktlist.get(i) == 2 && i != a) 
                     {
                         pktlist.set(i,3);
                         System.out.println("Cumulatively acking packet " + a);
@@ -109,8 +110,8 @@ public class SenderTransport
                 }
                 moveWindow(); 
             }
-            else if(pktlist.get(a) == 3) 
-            { //if pkt is already acked, resend all sent but unacked pkts
+            else 
+            { //else resend all sent but unacked pkts
                 System.out.println("Ack received for out of order packet, resend all sent but unacked packets");
                 for(int j = 0; j < pktlist.size(); j++)
                 {
@@ -183,7 +184,6 @@ public class SenderTransport
                 else
                 {
                     for(int j = i+1; j < i+1+n; j++)
-                        if(pktlist.get(j) != 1 || pktlist.get(j) != 2)
                             pktlist.add(1);
                 }   
             }
