@@ -11,6 +11,8 @@ public class SenderTransport
     private boolean usingTCP;
     private boolean start = true;
     private ArrayList<Integer> pktlist = new ArrayList<Integer>(50); 
+
+    private ArrayList<Packet> currentWindow;
     //here we create an arraylist to keep track of the sliding window, 
     //each index is for a packet and if the entry is: 
     // 1 -> packet not yet sent, but in sending window
@@ -39,6 +41,7 @@ public class SenderTransport
 
     public void sendMessage(Message msg)
     {
+
         
         if(usingTCP)
         {
@@ -53,6 +56,9 @@ public class SenderTransport
                 if(pktlist.get(i) == 1)
                 {
                     Packet p = new Packet(msg, i, -1);
+
+                    currentWindow.add(p);
+
                     nl.sendPacket(p, Event.RECEIVER);
                     //tl.startTimer(10);
                     pktlist.set(i,2);
@@ -129,18 +135,23 @@ public class SenderTransport
 
     public void timerExpired()
     { 
-        //when timeout 
-        //resend all sent but unacked pkts
-        //need to write this --- how to know when timeout actually occurs
-        System.out.println("Timer for oldest inflight packet has expired, resend all sent but unacked packets");
-        for(int j = 0; j < pktlist.size(); j++)
-        {
-            if(pktlist.get(j) == 2)
+
+        if(usingTCP){
+
+        } else {
+            //when timeout 
+            //resend all sent but unacked pkts
+            //need to write this --- how to know when timeout actually occurs
+            System.out.println("Timer for oldest inflight packet has expired, resend all sent but unacked packets");
+            for(int j = 0; j < pktlist.size(); j++)
             {
-                Packet resend = new Packet(msglist.get(j), j, -1);
-                nl.sendPacket(resend, Event.RECEIVER);
-                tl.startTimer(10);
-                System.out.println("Resent packet " + j);
+                if(pktlist.get(j) == 2)
+                {
+                    Packet resend = new Packet(msglist.get(j), j, -1);
+                    nl.sendPacket(resend, Event.RECEIVER);
+                    tl.startTimer(10);
+                    System.out.println("Resent packet " + j);
+                }
             }
         }
     }
@@ -153,6 +164,8 @@ public class SenderTransport
     public void setWindowSize(int n)
     {
         this.n=n;
+        this.currentWindow = new ArrayList<Packet>(this.n);
+        this.initializeWindow();
     }
 
     public void setProtocol(int n)
@@ -163,16 +176,20 @@ public class SenderTransport
             usingTCP=false;
     }
 
+    public void initializeWindow() {
+
+
+        for(int i = 0; i < n; i++)
+        {
+            pktlist.add(1);
+        }
+
+
+    }
+
     public void moveWindow()
     {
-        if(start)
-        {
-            for(int i = 0; i < n; i++)
-            {
-                pktlist.add(1);
-            }
-            start = false;
-        }
+       
         for(int i = 0; i < pktlist.size(); i++)
         {
             if(pktlist.get(i) == 1 || pktlist.get(i) == 2)

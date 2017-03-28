@@ -8,11 +8,16 @@ public class ReceiverTransport
     private ReceiverApplication ra;
     private NetworkLayer nl;
     private boolean usingTCP;
+
     private ArrayList<Integer> pktlist = new ArrayList<Integer>(50);
     //this will represent the pkt list, it will tell us the status of pkts
     // 1 = in current window
     // 2 = pkt received and ack sent
-    private ArrayList<Message> msglist = new ArrayList<Message>(50); 
+
+    private ArrayList<Packet> currentWindow;
+    private ArrayList<Packet> bufferedPacketList = new ArrayList<PAcket>(50); 
+
+
     //for tcp to buffer out or order messages 
     private int gbnwindow;
 
@@ -26,7 +31,6 @@ public class ReceiverTransport
 
     public void initialize()
     {
-        pktlist.add(1);
         gbnwindow = 0;
     }
 
@@ -34,15 +38,48 @@ public class ReceiverTransport
     { //out of order pkts?
         if(usingTCP)
         {
+            if(pkt.isCorrupt()){ // resend most recent ack
+                for(int i = pktlist.size(); i > 0; i-- ){
+
+                    if(pktlist.get(i) == 2){
+                        Packet p9 = new Packet(new Message(" "), -1, i);
+                        nl.sendPacket(p9, Event.SENDER);
+                        System.out.println("Packet is corrupt, resend ack highest in order packet: " + i));
+                    } 
+                }
+
+            } else {
+                int seqnum = pkt.getSeqnum();
+                boolean waiting = false;
+                int 
+
+                for(int i = 0; i < seqnum; i++){
+                    // a packet before the one you have just received is still waiting to be received
+                    if(pktlist.get(i) == 1){
+                        waiting = true;
+                        // ack
+                        bufferedPacketList.add(pkt);
+
+                        if(i == 0) { // account for the first case
+                            Packet p = new Packet(pkt.getMessage(), -1, 0);
+                        }
+
+                        Packet p = new Packet(pkt.getMessage(), -1, i-1);
+                        nl.sendPacket(p, Event.SENDER);
+                    }
+                }
+
+                if(!waiting){
+                    Packet p11 = new Packet(pkt.getMessage(), -1, seqnum);
+                    nl.sendPacket(p11, Event.SENDER);
+                    pktlist.set(seqnum, 2);
+                }
+                moveWindow();
+                updateBuffer();
+            }
 
         }
         else{
-                // int seqnum = pkt.getSeqnum();
-                // msglist.add(pkt.getMessage());
-                // Packet p = new Packet(pkt.getMessage(), -1, seqnum);
-                // nl.sendPacket(p, Event.SENDER);
-                // System.out.println("Ack sent for packet " + seqnum);
-
             if(pkt.isCorrupt()) 
             { //if pkt is corrupt, resend ack for highest pkt received 
               //  System.out.println("Packet received is corrupt, sending ack for highest in order packet");
@@ -81,6 +118,72 @@ public class ReceiverTransport
                 }
             }       
         }      
+    }
+
+     public void setWindowSize(int n)
+    {
+        this.n=n;
+        this.curentWindow = new ArrayList<Packet>(this.n);
+        this.initializeWindow();
+    }
+
+     public void initializeWindow() {
+        for(int i = 0; i < n; i++)
+        {
+            pktlist.add(1);
+        }
+    }
+
+    // true if all packets in sequence have been received
+    // false if waiting for packet so there are buffered packets
+    public boolean checkBuffer(){
+        int highestSeqNum=-1;
+        for(int i = 0; i < bufferedPacketList.size(); i++){
+            Packet p = bufferedPacketList.get(i);
+            if(p.getSeqnum() > highestSeqNum){
+                highestSeqNum = p.getSeqnum();
+            }
+
+        }
+
+        for(int j =0; j < highestSeqNum; j++){
+            if(pktlist.get(j) == 1){
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public void updateBuffer(){
+        if(checkBuffer()){
+            //send all packets to upper layer
+        } else {
+
+        }
+    }
+
+     public void moveWindow(){
+        // 1 = in receiver window but nothing received
+        // 2 = in receiver window, recevied packet and sent ACK
+       
+        for(int i = 0; i < pktlist.size(); i++)
+        {
+            if(pktlist.get(i) == 1 )
+                continue;
+            else if(pktlist.get(i) == 2)
+            {
+                if(pktlist.get(i+1) == 2)
+                    continue;
+                else
+                {
+                    for(int j = i+1; j < i+1+n; j++)
+                        pktlist.add(1);
+                }   
+            }
+            else
+                continue;
+        }
     }
 
     public void setProtocol(int n)

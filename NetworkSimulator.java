@@ -38,13 +38,14 @@ public class NetworkSimulator
 
         //setting window size
         st.setWindowSize(Integer.parseInt(args[4]));
+        rt.setWindowSize(Integer.parseInt(args[4]));
 
         //setting protocol type
         st.setProtocol(Integer.parseInt(args[5]));
         rt.setProtocol(Integer.parseInt(args[5]));
 
         DEBUG = Integer.parseInt(args[6]);
-        
+
         //this loop will run while there are events in the priority queue
         while(true)
         {
