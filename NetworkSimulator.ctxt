@@ -1,0 +1,7 @@
+#BlueJ class context
+comment0.params=args
+comment0.target=void\ main(java.lang.String[])
+comment0.text=\n\ Main\ method\ with\ follwing\ variables\n\ @param\ args[0]\ file\ with\ messages\n\ @param\ args[1]\ time\ between\ messages\n\ @param\ args[2]\ loss\ probability\n\ @param\ args[3]\ curroption\ probability\n
+comment1.params=fileName
+comment1.target=java.util.ArrayList\ readFile(java.lang.String)
+numComments=2

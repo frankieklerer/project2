@@ -1,0 +1,21 @@
+#BlueJ class context
+comment0.params=time\ type\ host
+comment0.target=Event(int,\ int,\ int)
+comment0.text=\n\ Initializing\ new\ event\ without\ packet.\ This\ will\ be\ used\ for\ sending\ events\n\ @param\ time\ time\ of\ event\n\ @param\ type\ type\ of\ event\n\ @param\ host\ where\ event\ is\ happening.\n
+comment1.params=time\ type\ host\ pkt
+comment1.target=Event(int,\ int,\ int,\ Packet)
+comment1.text=\n\ Initializing\ new\ event\ with\ packet.\ This\ will\ be\ used\ for\ arriving\ events\n\ @param\ time\ time\ of\ event\n\ @param\ type\ type\ of\ event\n\ @param\ host\ where\ event\ is\ happening.\n\ @param\ pkt\ packet\ that\ is\ arriving.\n
+comment2.params=
+comment2.target=void\ killTimer()
+comment2.text=\n\ Kills\ timer\ by\ simply\ setting\ its\ event\ type\ to\ KILLEDTIMER\n
+comment3.params=
+comment3.target=int\ getTime()
+comment4.params=
+comment4.target=int\ getType()
+comment5.params=
+comment5.target=int\ getHost()
+comment6.params=
+comment6.target=Packet\ getPacket()
+comment7.params=e
+comment7.target=int\ compareTo(Event)
+numComments=8

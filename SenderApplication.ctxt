@@ -1,0 +1,8 @@
+#BlueJ class context
+comment0.params=messages\ nl
+comment0.target=SenderApplication(java.util.ArrayList,\ NetworkLayer)
+comment1.params=
+comment1.target=SenderTransport\ getSenderTransport()
+comment2.params=
+comment2.target=void\ sendMessage()
+numComments=3

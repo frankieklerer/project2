@@ -1,0 +1,10 @@
+#BlueJ class context
+comment0.params=nl
+comment0.target=ReceiverTransport(NetworkLayer)
+comment1.params=
+comment1.target=void\ initialize()
+comment2.params=pkt
+comment2.target=void\ receiveMessage(Packet)
+comment3.params=n
+comment3.target=void\ setProtocol(int)
+numComments=4

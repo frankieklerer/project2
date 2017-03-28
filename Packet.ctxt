@@ -1,0 +1,17 @@
+#BlueJ class context
+comment0.params=msg\ seqnum\ acknum\ checksum
+comment0.target=Packet(Message,\ int,\ int,\ int)
+comment1.params=
+comment1.target=int\ getAcknum()
+comment2.params=
+comment2.target=int\ getSeqnum()
+comment3.params=
+comment3.target=Message\ getMessage()
+comment4.params=
+comment4.target=void\ setChecksum()
+comment5.params=
+comment5.target=boolean\ isCorrupt()
+comment6.params=
+comment6.target=void\ corrupt()
+comment6.text=\n\ This\ method\ curropts\ the\ packet\ the\ follwing\ way\:\n\ curropt\ the\ message\ with\ a\ 75%\ chance\n\ curropt\ the\ seqnum\ with\ 12.5%\ chance\n\ curropt\ the\ ackum\ with\ 12.5%\ chance\n
+numComments=7
