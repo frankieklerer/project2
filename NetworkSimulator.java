@@ -23,21 +23,28 @@ public class NetworkSimulator
         }
         //reading in file line by line. Each line will be one message
         ArrayList<String> messageArray = readFile(args[0]);
+
         //creating a new timeline with an average time between packets.
         Timeline tl = new Timeline(Integer.parseInt(args[1]), messageArray.size());
+
         //creating a new network layer with specific loss and curroption probability.
         NetworkLayer nl = new NetworkLayer(Float.parseFloat(args[2]),Float.parseFloat(args[3]),tl);
         SenderApplication sa = new SenderApplication(messageArray,nl);
         SenderTransport st = sa.getSenderTransport();
+
         //sender and receiver transport needs access to timeline to set timer.
         st.setTimeLine(tl);
         ReceiverTransport rt = new ReceiverTransport(nl);
+
         //setting window size
         st.setWindowSize(Integer.parseInt(args[4]));
+
         //setting protocol type
         st.setProtocol(Integer.parseInt(args[5]));
         rt.setProtocol(Integer.parseInt(args[5]));
+
         DEBUG = Integer.parseInt(args[6]);
+        
         //this loop will run while there are events in the priority queue
         while(true)
         {
