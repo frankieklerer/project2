@@ -10,29 +10,22 @@ public class SenderApplication
     private int index; //how many messages has the application sent so far
     private Timeline tl; //the timeline associated with the simulation
     
-    public SenderApplication(ArrayList<String> messages, NetworkLayer nl)
-    {
-        st = new SenderTransport(nl, messages);
+    public SenderApplication(ArrayList<String> messages, NetworkLayer nl){
+        st = new SenderTransport(nl);
         this.messages=messages;
         index=0;    
-        
-        
     }
     
-    public SenderTransport getSenderTransport()
-    {
+    public SenderTransport getSenderTransport(){
         return st;
     }
     
-    public void sendMessage()
-    {
- 
-        st.sendMessage(new Message(messages.get(index++)));
-
+    public void sendMessage(){
+       st.sendMessage(new Message(messages.get(index++)));
     }
     
-
+    public int messageCount(){
+        return messages.size();
+    }
     
-    
-
 }

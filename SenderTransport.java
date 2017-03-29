@@ -11,7 +11,7 @@ public class SenderTransport
     private Timeline timeline;
     private int windowSize;
     private boolean usingTCP;
-    private int sequenceNumber=0;
+    private int sequenceNumber;
 
     /**
     * Array list to keep track of the sliding window
@@ -20,7 +20,7 @@ public class SenderTransport
     * 2 means the packet has been sent but its ACK has not been received
     * 3 means the packet has been sent and ACKed
     **/
-    private ArrayList<Integer> packetStatusCode = new ArrayList<Integer>(50); 
+    private ArrayList<Integer> packetStatusCode;
 
     // Array list of Packet objects to keep track of which packets are in the current window
     // GBN will resend all packets in this window 
@@ -29,17 +29,17 @@ public class SenderTransport
     /**
     * Array list of Message objects whose indexs correspond to packet sequence number
     **/
-    private HashMap<Integer, Packet> packets = new HashMap<Integer, Packet>(50); 
-
-    private ArrayList<String> messageList;
+    private HashMap<Integer, Packet> packets; 
 
     /**
     * Constructor
     * Sender TL is creater with the NL and intialized
     **/
-    public SenderTransport(NetworkLayer networkLayer, ArrayList<String> messages){
+    public SenderTransport(NetworkLayer networkLayer){
         this.networkLayer=networkLayer;
-        this.messageList = messages;
+        this.packetStatusCode = new ArrayList<Integer>();
+        this.packets = new HashMap<Integer, Packet>();
+        this.sequenceNumber = 0;
         this.initialize();
     }
 
@@ -63,7 +63,7 @@ public class SenderTransport
                 // if the packet has not yet been sent
                 if(packetStatusCode.get(i) == 1){
 
-                    //create a new packet with the message
+                    //create a new packet with the message (-1 because no ack num)
                     Packet newPacket = new Packet(msg, sequenceNumber,-1);
 
                     // add packet to current window
@@ -91,6 +91,9 @@ public class SenderTransport
 
     }
 
+    /**
+    * Receive an ACK from the receiver
+    **/
     public void receiveMessage(Packet receivedPacket){
 
         if(usingTCP){
@@ -149,6 +152,10 @@ public class SenderTransport
                     moveWindow(unACKed.getAcknum());
                   }
                  }
+
+                // if the packet has already been ACKed, then the packet was corrupted a
+                } else if(packetStatusCode.get(ackNum) == 3){
+
                 }
               }
           }
@@ -182,13 +189,22 @@ public class SenderTransport
     **/
     public void moveWindow(int packetAckNum){
 
-        packetStatusCode.add(packetAckNum+windowSize, 1);
-        System.out.println("Placing status code of 1 for " + packetAckNum+windowSize);
-        Packet toBeRemoved = currentWindow.get(packetAckNum);
-        currentWindow.remove(toBeRemoved);
-        Packet newPacket = packets.get(packetAckNum+windowSize);
-        currentWindow.add(newPacket);
-        System.out.println("Adding packet " + packetAckNum+windowSize + " to current");
+      int nextPacketSeqNum = windowSize+packetAckNum;
+      System.out.println("Marking packet " + packetAckNum + " as status code of 3");
+      //System.out.println(nextPacketSeqNum);
+
+      // expand status code 
+      packetStatusCode.add(nextPacketSeqNum, 3);
+      System.out.println("Placing status code of 1 for packet " + nextPacketSeqNum);
+
+
+      Packet toBeRemoved = currentWindow.get(packetAckNum);
+      currentWindow.remove(toBeRemoved);
+      System.out.println("Removing packet " + packetAckNum + " from current window");
+
+      Packet newPacket = packets.get(nextPacketSeqNum);
+      currentWindow.add(newPacket);
+      System.out.println("Adding packet " + nextPacketSeqNum + " to current window" + currentWindow);
     }
 
     /**
@@ -202,7 +218,7 @@ public class SenderTransport
     * Set the window size from the program parameters
     **/
     public void setWindowSize(int windowSize){
-      System.out.println("Window size of " + windowSize);
+      //System.out.println("Window size of " + windowSize);
       this.windowSize=windowSize;
       this.currentWindow = new ArrayList<Packet>(this.windowSize);
       this.initializeWindow();
