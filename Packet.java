@@ -8,7 +8,7 @@ public class Packet
     
     private Message msg; //the enclosed message
     private int seqnum; //packets seq. number
-    private int acknum; //packet ack. number
+    private int acknum; //packet ack. number 
     private int checksum; //packet checksum
 
     Random ran; //random number generator
@@ -32,30 +32,25 @@ public class Packet
         this.checksum = calculateCheckSum();
     }
 
-    public int getAcknum()
-    {
+    public int getAcknum(){
         return acknum;
     }
     
-    public int getSeqnum()
-    {
+    public int getSeqnum() {
         return seqnum;
     }
 
-    public Message getMessage()
-    {
+    public Message getMessage(){
         return msg;
     }
     
     //set checksum equal to the calculated checksum
-    public void setChecksum()
-    {
+    public void setChecksum(){
         checksum = calculateCheckSum();
     }
     
     //if the calculated check sum is equal to the checksum on packet, then it is not corrupt
-    public boolean isCorrupt()
-    {
+    public boolean isCorrupt(){
         if(checksum == calculateCheckSum())
         {
           return false;
@@ -70,8 +65,7 @@ public class Packet
      * curropt the seqnum with 12.5% chance
      * curropt the ackum with 12.5% chance
      */
-    public void corrupt()
-    {
+    public void corrupt() {
         if(ran.nextDouble()<0.75)
         {this.msg.corruptMessage();}
         else if(ran.nextDouble()<0.875)
@@ -84,8 +78,7 @@ public class Packet
 /* Here is a method to calculate the checksum of the message and return an int.
 * We take the message, extract the string, change it into bytes, then sum the bytes
 */
-    public int calculateCheckSum()
-    {
+    public int calculateCheckSum(){
         String message = msg.getMessage();
         byte[] bytes = message.getBytes();
         int sum = bytes[0];
