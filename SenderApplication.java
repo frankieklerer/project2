@@ -12,7 +12,7 @@ public class SenderApplication
     
     public SenderApplication(ArrayList<String> messages, NetworkLayer nl)
     {
-        st = new SenderTransport(nl);
+        st = new SenderTransport(nl, messages);
         this.messages=messages;
         index=0;    
         

@@ -15,7 +15,7 @@ public class ReceiverTransport
     // 2 = pkt received and ack sent
 
     private ArrayList<Packet> currentWindow;
-    private ArrayList<Packet> bufferedPacketList = new ArrayList<PAcket>(50); 
+    private ArrayList<Packet> bufferedPacketList = new ArrayList<Packet>(50); 
 
 
     //for tcp to buffer out or order messages 
@@ -44,14 +44,14 @@ public class ReceiverTransport
                     if(pktlist.get(i) == 2){
                         Packet p9 = new Packet(new Message(" "), -1, i);
                         nl.sendPacket(p9, Event.SENDER);
-                        System.out.println("Packet is corrupt, resend ack highest in order packet: " + i));
+                        System.out.println("Packet is corrupt, resend ack highest in order packet: " + i);
                     } 
                 }
 
             } else {
                 int seqnum = pkt.getSeqnum();
                 boolean waiting = false;
-                int 
+                
 
                 for(int i = 0; i < seqnum; i++){
                     // a packet before the one you have just received is still waiting to be received
@@ -100,7 +100,7 @@ public class ReceiverTransport
                     Packet p = new Packet(pkt.getMessage(), -1, seqnum);
                     nl.sendPacket(p, Event.SENDER);
                     gbnwindow++;
-                    msglist.add(pkt.getMessage());
+                    //msglist.add(pkt.getMessage());
                     System.out.println("Ack sent for packet " + seqnum);
                     pktlist.set(seqnum,2);
                     pktlist.add(1);
@@ -112,23 +112,23 @@ public class ReceiverTransport
                         Packet p3 = new Packet(new Message(" "), -1, 0);
                         nl.sendPacket(p3, Event.SENDER);
                     }
-                    Packet p4 = new Packet(msglist.get(gbnwindow-1), -1, gbnwindow-1);
-                    nl.sendPacket(p4, Event.SENDER);
+                    //Packet p4 = new Packet(pktlist.get(gbnwindow-1), -1, gbnwindow-1);
+                    //nl.sendPacket(p4, Event.SENDER);
                     System.out.println("Out of Order Pkt receieved, resend ack for highest in order packet: " + (gbnwindow-1));
                 }
             }       
         }      
     }
 
-     public void setWindowSize(int n)
+     public void setWindowSize(int gbnwindow)
     {
-        this.n=n;
-        this.curentWindow = new ArrayList<Packet>(this.n);
+        this.gbnwindow=gbnwindow;
+        this.currentWindow = new ArrayList<Packet>(this.gbnwindow);
         this.initializeWindow();
     }
 
      public void initializeWindow() {
-        for(int i = 0; i < n; i++)
+        for(int i = 0; i < gbnwindow; i++)
         {
             pktlist.add(1);
         }
@@ -177,7 +177,7 @@ public class ReceiverTransport
                     continue;
                 else
                 {
-                    for(int j = i+1; j < i+1+n; j++)
+                    for(int j = i+1; j < i+1+gbnwindow; j++)
                         pktlist.add(1);
                 }   
             }
