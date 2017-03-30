@@ -58,36 +58,44 @@ public class SenderTransport
 
         }else{
 
-            //create a new packet with the message (-1 because no ack num)
-              Packet newPacket = new Packet(msg, sequenceNumber,-1);
+          int packetSeqNum = sequenceNumber;
+          boolean sent = false;
 
-                // if the packet has not yet been sent
-                if(packetStatusCode.get(sequenceNumber) == 1){
+          // increment sequence number
+          sequenceNumber++;
 
-                    // add packet to current window
-                    currentWindow.add(newPacket);
+          for(int i = 0; i < packetStatusCode.size(); i++){
 
-                    // for(int i = 0; i < currentWindow.size(); i++){
-                    //   Packet temp = currentWindow.get(i);
-                    //   System.out.println(temp.getSeqnum());
-                    // }
+              // if the packet has not yet been sent
+              if(packetStatusCode.get(i) == 1){
 
-                    // set the packet status code to sent but waiting for ACK
-                    packetStatusCode.set(sequenceNumber, 2);
+               // set the packet status code to sent but waiting for ACK
+                packetStatusCode.set(i, 2);
 
-                    // place new packet in hash map with associated sequence number
-                    packets.put(sequenceNumber, newPacket);
+                //create a new packet with the message (-1 because no ack num)
+                Packet newPacket = new Packet(msg, i,-1);
 
-                    // send the packet to the network layer
-                    networkLayer.sendPacket(newPacket, Event.RECEIVER);
+                // add packet to current window
+                currentWindow.add(newPacket);
 
-                    //timeline.startTimer(10);
+                // place new packet in hash map with associated sequence number
+                packets.put(i, newPacket);
 
-                    System.out.println("Packet " + sequenceNumber + " has been sent.");
+                System.out.println("Packet " + i + " has been sent.");
 
-                    // increment sequence number
-                    sequenceNumber++;
-                }
+                // send the packet to the network layer
+                networkLayer.sendPacket(newPacket, Event.RECEIVER);
+                sent = true;
+
+                //timeline.startTimer(10);
+              }
+
+              if(sent){
+                break;
+              }
+
+          }
+
         }
         
 
@@ -138,7 +146,6 @@ public class SenderTransport
                 System.out.println("ACK received for Packet " + ackNum);
 
                 // set it as ack
-                packetStatusCode.set(packetStatusCode.get(ackNum), 3);
                 moveWindow(ackNum); 
 
                 // find where the packet is in current window
@@ -214,10 +221,11 @@ public class SenderTransport
 
       int nextPacketSeqNum = windowSize+packetAckNum;
       System.out.println("Marking packet " + packetAckNum + " as status code of 3");
+      packetStatusCode.set(packetAckNum,3);
       //System.out.println(nextPacketSeqNum);
 
       // expand status code 
-      packetStatusCode.add(nextPacketSeqNum, 3);
+      packetStatusCode.add(nextPacketSeqNum, 1);
       System.out.println("Placing status code of 1 for packet " + nextPacketSeqNum);
 
       currentWindow.remove(0);
