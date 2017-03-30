@@ -57,20 +57,22 @@ public class SenderTransport
 
         }else{
 
-            // for every packet in the current window 
-            for(int i = 0; i < windowSize; i++){
+            //create a new packet with the message (-1 because no ack num)
+              Packet newPacket = new Packet(msg, sequenceNumber,-1);
 
                 // if the packet has not yet been sent
-                if(packetStatusCode.get(i) == 1){
-
-                    //create a new packet with the message (-1 because no ack num)
-                    Packet newPacket = new Packet(msg, sequenceNumber,-1);
+                if(packetStatusCode.get(sequenceNumber) == 1){
 
                     // add packet to current window
-                    currentWindow.add(i, newPacket);
+                    currentWindow.add(newPacket);
+
+                    // for(int i = 0; i < currentWindow.size(); i++){
+                    //   Packet temp = currentWindow.get(i);
+                    //   System.out.println(temp.getSeqnum());
+                    // }
 
                     // set the packet status code to sent but waiting for ACK
-                    packetStatusCode.set(i, 2);
+                    packetStatusCode.set(sequenceNumber, 2);
 
                     // place new packet in hash map with associated sequence number
                     packets.put(sequenceNumber, newPacket);
@@ -85,7 +87,6 @@ public class SenderTransport
                     // increment sequence number
                     sequenceNumber++;
                 }
-            }
         }
         
 
@@ -131,8 +132,11 @@ public class SenderTransport
 
             } else { // received an uncorrupted ACK
 
+              // if sent but unACKed
               if(packetStatusCode.get(ackNum) == 2){
                 System.out.println("ACK received for Packet " + ackNum);
+
+                // set it as ack
                 packetStatusCode.set(packetStatusCode.get(ackNum), 3);
                 moveWindow(ackNum); 
 
@@ -148,13 +152,31 @@ public class SenderTransport
                   if(packetStatusCode.get(unACKed.getAcknum()) == 2){
 
                     System.out.println("Cumulative ACK for Packet " + unACKed.getAcknum());
+
+                    // ack them all
                     packetStatusCode.set(unACKed.getAcknum(), 3);
                     moveWindow(unACKed.getAcknum());
                   }
                  }
 
-                // if the packet has already been ACKed, then the packet was corrupted a
+                // if the packet has already been ACKed, then the receiver is confused/received a corrupted packet
                 } else if(packetStatusCode.get(ackNum) == 3){
+
+                   // for all the packets in the current window
+                  for(int i = 0; i < currentWindow.size(); i++){
+
+                    // that have been sent but not yet ACKed
+                    if(packetStatusCode.get(i) == 2){
+
+                      // fetch packet object from hash map with the ack num
+                      Packet resend = packets.get(ackNum);
+
+                      networkLayer.sendPacket(resend, Event.RECEIVER);
+
+                      // timeline.startTimer(10);
+                      System.out.println("Packet " + ackNum + "has been resent");
+                    }
+                  }
 
                 }
               }
@@ -197,14 +219,9 @@ public class SenderTransport
       packetStatusCode.add(nextPacketSeqNum, 3);
       System.out.println("Placing status code of 1 for packet " + nextPacketSeqNum);
 
-
-      Packet toBeRemoved = currentWindow.get(packetAckNum);
-      currentWindow.remove(toBeRemoved);
+      currentWindow.remove(0);
       System.out.println("Removing packet " + packetAckNum + " from current window");
 
-      Packet newPacket = packets.get(nextPacketSeqNum);
-      currentWindow.add(newPacket);
-      System.out.println("Adding packet " + nextPacketSeqNum + " to current window" + currentWindow);
     }
 
     /**
@@ -246,7 +263,6 @@ public class SenderTransport
         for(int i = 0; i < windowSize; i++) {
           System.out.println("Placing status code 1 for packet " + i);
           packetStatusCode.add(i,1);
-          //currentWindow.add(i);
         }
     }
 }
