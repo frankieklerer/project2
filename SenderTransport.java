@@ -12,6 +12,7 @@ public class SenderTransport
     private int windowSize;
     private boolean usingTCP;
     private int sequenceNumber;
+    private boolean timerOn;
 
     /**
     * Array list to keep track of the sliding window
@@ -41,6 +42,7 @@ public class SenderTransport
         this.packets = new HashMap<Integer, Packet>();
         this.sequenceNumber = 0;
         this.initialize();
+        this.timerOn = false;
     }
 
     public void initialize(){
@@ -87,7 +89,10 @@ public class SenderTransport
                 networkLayer.sendPacket(newPacket, Event.RECEIVER);
                 sent = true;
 
-                //timeline.startTimer(10);
+                if(!timerOn){
+                  timeline.startTimer(50);
+                  timerOn = true;
+                }
               }
 
               if(sent){
@@ -113,8 +118,6 @@ public class SenderTransport
             // get the ACK number of the packet
             int ackNum = receivedPacket.getAcknum();
 
-           // timeline.stopTimer();
-
             // if the packet is corrupt
             if(receivedPacket.isCorrupt()){
 
@@ -132,15 +135,41 @@ public class SenderTransport
 
                   networkLayer.sendPacket(resend, Event.RECEIVER);
 
-                  // timeline.startTimer(10);
-                  System.out.println("Packet " + ackNum + "has been resent");
+                  if(!timerOn){
+                    timeline.startTimer(50);
+                    timerOn = true;
+                  }
+                  System.out.println("Packet " + ackNum + " has been resent");
                 }
               }
 
-             // timeline.startTimer(10);
-
             } else { // received an uncorrupted ACK
+                
+              if(timerOn)
+              {
+                timeline.stopTimer();
+                timerOn = false;
+              }
+              
+              // if the packet has already been ACKed, then the receiver is confused/received a corrupted packet
+              if(packetStatusCode.get(ackNum) == 3){
 
+                   // for all the packets in the current window
+                  for(int i = 0; i < currentWindow.size(); i++){
+
+                    // that have been sent but not yet ACKed
+                    if(packetStatusCode.get(i) == 2){
+
+                      // fetch packet object from hash map with the ack num
+                      Packet resend = packets.get(ackNum);
+
+                      networkLayer.sendPacket(resend, Event.RECEIVER);
+
+                      System.out.println("Packet " + ackNum + "has been resent");
+                    }
+                  }
+
+                }
               // if sent but unACKed
               if(packetStatusCode.get(ackNum) == 2){
                 System.out.println("ACK received for Packet " + ackNum);
@@ -167,51 +196,48 @@ public class SenderTransport
                   }
                  }
 
-                // if the packet has already been ACKed, then the receiver is confused/received a corrupted packet
-                } else if(packetStatusCode.get(ackNum) == 3){
-
-                   // for all the packets in the current window
-                  for(int i = 0; i < currentWindow.size(); i++){
-
-                    // that have been sent but not yet ACKed
-                    if(packetStatusCode.get(i) == 2){
-
-                      // fetch packet object from hash map with the ack num
-                      Packet resend = packets.get(ackNum);
-
-                      networkLayer.sendPacket(resend, Event.RECEIVER);
-
-                      // timeline.startTimer(10);
-                      System.out.println("Packet " + ackNum + "has been resent");
-                    }
-                  }
-
+                
                 }
               }
+              if(!timerOn){
+                  timeline.startTimer(50);
+                  timerOn = true;
+                    }
           }
     }
 
     public void timerExpired()
     { 
 
-        // if(usingTCP){
+        if(usingTCP){
 
-        // } else {
-        //     //when timeout 
-        //     //resend all sent but unacked pkts
-        //     //need to write this --- how to know when timeout actually occurs
-        //     System.out.println("Timer for oldest inflight packet has expired, resend all sent but unacked packets");
-        //     for(int j = 0; j < packetStatusCode.size(); j++)
-        //     {
-        //         if(packetStatusCode.get(j) == 2)
-        //         {
-        //             Packet resend = new Packet(messageList.get(j), j, -1);
-        //             networkLayer.sendPacket(resend, Event.RECEIVER);
-        //             timeline.startTimer(10);
-        //             System.out.println("Resent packet " + j);
-        //         }
-        //     }
-        // }
+        } else {
+            //when timeout 
+            //resend all sent but unacked pkts
+            //need to write this --- how to know when timeout actually occurs
+            System.out.println("Timer for oldest inflight packet has expired, resend all sent but unacked packets");
+            // for all the packets in the current window
+              for(int i = 0; i < currentWindow.size(); i++){
+
+                // that have been sent but not yet ACKed
+                if(packetStatusCode.get(i) == 2){
+
+                  Packet toBeResent = currentWindow.get(i);
+
+                  // fetch packet object from hash map with the ack num
+                  Packet resend = packets.get(toBeResent.getSeqnum());
+
+                  networkLayer.sendPacket(resend, Event.RECEIVER);
+
+                  System.out.println("Packet " + toBeResent.getSeqnum() + " has been resent");
+
+                  if(!timerOn){
+                   timeline.startTimer(50);
+                   timerOn = true;
+                  }
+                }
+              }
+        }
     }
 
     /**
