@@ -13,6 +13,8 @@ public class SenderTransport
     private boolean usingTCP;
     private int sequenceNumber;
     private boolean timerOn;
+    private int tcpACKnum;
+    private ArrayList<Integer> ackCountTCP;
 
     /**
     * Array list to keep track of the sliding window
@@ -39,15 +41,17 @@ public class SenderTransport
     public SenderTransport(NetworkLayer networkLayer){
         this.networkLayer=networkLayer;
         this.packetStatusCode = new ArrayList<Integer>();
-        this.packets = new HashMap<Integer, Packet>();
-        this.sequenceNumber = 0;
+        this.packets = new HashMap<Integer, Packet>(); 
         this.initialize();
-        this.timerOn = false;
+       
     }
 
     public void initialize(){
+      this.sequenceNumber = 0;
+       this.timerOn = false;
         if(usingTCP) {
-
+          tcpACKnum = 0;
+          this.ackCountTCP = new ArrayList<Integer>();
         }else{
             
         }     
@@ -57,10 +61,56 @@ public class SenderTransport
 
     
         if(usingTCP){
+          int packetSeqNum = sequenceNumber;
+          boolean sent = false;
+          
 
+<<<<<<< HEAD
           
 
         }else{
+=======
+          // increment sequence number
+          sequenceNumber++;
+
+          for(int i = 0; i < packetStatusCode.size(); i++){
+
+              // if the packet has not yet been sent
+              if(packetStatusCode.get(i) == 1 && packetSeqNum == tcpACKnum){
+
+               // set the packet status code to sent but waiting for ACK
+                packetStatusCode.set(i, 2);
+
+                //create a new packet with the message (-1 because no ack num)
+                Packet newPacket = new Packet(msg, i,-1);
+
+                // add packet to current window
+                currentWindow.add(newPacket);
+
+                // place new packet in hash map with associated sequence number
+                packets.put(i, newPacket);
+
+                System.out.println("Packet " + i + " has been sent.");
+
+                // send the packet to the network layer
+                networkLayer.sendPacket(newPacket, Event.RECEIVER);
+                sent = true;
+                ackCountTCP.add(0);
+
+                if(!timerOn){
+                  timeline.startTimer(50);
+                  timerOn = true;
+                }
+              }
+
+              if(sent){
+                break;
+              }
+          }
+        }
+
+        else{
+>>>>>>> 4fb04c5e61a0a5059dd971c08c2863412080236e
 
           int packetSeqNum = sequenceNumber;
           boolean sent = false;
@@ -114,8 +164,72 @@ public class SenderTransport
     public void receiveMessage(Packet receivedPacket){
 
         if(usingTCP){
+            // if the packet is corrupt
+            if(receivedPacket.isCorrupt())
+            {
+              //if pkt is corrupt, wait for timeout.
+              System.out.println("Received ACK is corrupt, wait for timeout or duplicate acks.");
+            }
+            else //received not corrupted ack. 
+            {
+               // get the ACK number of the packet
+                int ackNum = receivedPacket.getAcknum();
 
-        }else{
+                if(packetStatusCode.get(ackNum) == 3)
+                {
+                  int count = ackCountTCP.get(ackNum);
+                  ackCountTCP.set(ackNum, count++);
+                  if(ackCountTCP.get(ackNum) == 3)
+                  {
+                      // fetch packet object from hash map with the ack num
+                      Packet resend = packets.get(ackNum);
+
+                      networkLayer.sendPacket(resend, Event.RECEIVER);
+
+                      System.out.println("Packet " + ackNum + "has been resent");
+                  }
+                }
+
+                else if(packetStatusCode.get(ackNum) == 2) //sent but ack not yet recieved
+                {
+                    System.out.println("ACK received for Packet " + ackNum);
+
+                    // set it as ack
+                    moveWindow(ackNum); 
+
+                    // check if there are unACKed packets before this packet 
+                    for(int j = 0; j < ackNum; j++){
+
+                     // Packet unACKed = currentWindow.get(j);
+
+                      // if they still have not been ACKed
+                    if(packetStatusCode.get(j) == 2){
+
+                        System.out.println("Cumulative ACK for Packet " + j);
+
+                        // ack them all
+                        packetStatusCode.set(j, 3);
+                        moveWindow(j);
+                      }
+                 }
+   
+                }
+                
+
+
+            }
+
+
+
+
+            if(timerOn)
+            {
+                timeline.stopTimer();
+                timerOn = false;
+            }
+        }
+
+        else{
 
             // get the ACK number of the packet
             int ackNum = receivedPacket.getAcknum();
@@ -207,9 +321,35 @@ public class SenderTransport
     public void timerExpired()
     { 
       timerOn = false;
+      boolean resent = false;
 
         if(usingTCP){
 
+          System.out.println("Timer for oldest inflight packet has expired, resend oldest unACKed packet");
+
+          for(int i = 0; i < sequenceNumber; i++)
+          {
+              if(packetStatusCode.get(i) == 2)
+              {
+                Packet toBeResent = currentWindow.get(i);
+
+                // fetch packet object from hash map with the ack num
+                Packet resend = packets.get(toBeResent.getSeqnum());
+
+                networkLayer.sendPacket(resend, Event.RECEIVER);
+                System.out.println("Packet " +  toBeResent.getSeqnum() + " has been resent.");
+
+                if(!timerOn){
+                   timeline.startTimer(50);
+                   timerOn = true;
+                  }
+
+                resent = true;
+              }
+              
+              if(resent)
+                break;
+          }
         } else {
             //when timeout resend all sent but unacked pkts
 
