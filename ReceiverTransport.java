@@ -9,6 +9,7 @@ public class ReceiverTransport
     private NetworkLayer networkLayer;
     private boolean usingTCP;
     private int windowSizeGBN;
+    private int windowSizeTCP;
 
     /**
     * Array list to keep track of the sliding window
@@ -37,47 +38,45 @@ public class ReceiverTransport
 
     public void receiveMessage(Packet pkt){ //out of order pkts?
         if(usingTCP){
-            // if(pkt.isCorrupt()){ // resend most recent ack
-            //     for(int i = pktlist.size(); i > 0; i-- ){
+            if(pkt.isCorrupt()){ // resend most recent ack
+                for(int i = 0; i < packetStatusCode.size(); i++ ){
+                    if(packetStatusCode.get(i) == 2){
+                        Packet p9 = new Packet(new Message(" "), -1, i);
+                        networkLayer.sendPacket(p9, Event.SENDER);
+                        System.out.println("Packet is corrupt, resend ack highest in order packet: " + i);
+                    } 
+                }
 
-            //         if(pktlist.get(i) == 2){
-            //             Packet p9 = new Packet(new Message(" "), -1, i);
-            //             networkLayer.sendPacket(p9, Event.SENDER);
-            //             System.out.println("Packet is corrupt, resend ack highest in order packet: " + i);
-            //         } 
-            //     }
-
-            // } else {
-            //     int seqnum = pkt.getSeqnum();
-            //     boolean waiting = false;
+            } 
+            else {
+                int seqnum = pkt.getSeqnum();
+                boolean waiting = false;
                 
 
-            //     for(int i = 0; i < seqnum; i++){
-            //         // a packet before the one you have just received is still waiting to be received
-            //         if(pktlist.get(i) == 1){
-            //             waiting = true;
-            //             // ack
-            //             bufferedPacketList.add(pkt);
+                for(int i = 0; i < seqnum; i++){
+                    // a packet before the one you have just received is still waiting to be received
+                    if(packetStatusCode.get(i) == 1){
+                        waiting = true;
+                        
+                        bufferedPacketList.add(pkt);
 
-            //             if(i == 0) { // account for the first case
-            //                 Packet p = new Packet(pkt.getMessage(), -1, 0);
-            //             }
+                        Packet p = new Packet(pkt.getMessage(), -1, i+1);
+                        networkLayer.sendPacket(p, Event.SENDER);
+                    }
+                }
 
-            //             Packet p = new Packet(pkt.getMessage(), -1, i-1);
-            //             networkLayer.sendPacket(p, Event.SENDER);
-            //         }
-            //     }
+                if(!waiting){
+                    Packet p11 = new Packet(pkt.getMessage(), -1, seqnum+1);
+                    networkLayer.sendPacket(p11, Event.SENDER);
+                    packetStatusCode.set(seqnum, 2);
+                }
+                moveWindow();
+                updateBuffer();
+            }
 
-            //     if(!waiting){
-            //         Packet p11 = new Packet(pkt.getMessage(), -1, seqnum);
-            //         networkLayer.sendPacket(p11, Event.SENDER);
-            //         pktlist.set(seqnum, 2);
-            //     }
-            //     moveWindow();
-            //     updateBuffer();
-            // }
+        }
 
-        }else{
+        else{
 
             int packetSeqNum = pkt.getSeqnum();
             System.out.println("Receiver has just received packet " + packetSeqNum);
@@ -148,6 +147,7 @@ public class ReceiverTransport
                     networkLayer.sendPacket(packetACK, Event.SENDER);
                     packetStatusCode.set(packetSeqNum, 2);
                     System.out.println("ACK sent for Packet " + packetSeqNum);
+                    ra.receiveMessage(pkt.getMessage());
                 }
             }       
         }      
@@ -196,7 +196,7 @@ public class ReceiverTransport
                     continue;
                 else
                 {
-                    for(int j = i+1; j < i+1+windowSizeGBN; j++)
+                    for(int j = i+1; j < i+1+windowSizeTCP; j++)
                         packetStatusCode.add(1);
                 }   
             }
@@ -205,13 +205,40 @@ public class ReceiverTransport
         }
     }
 
-    public void initializeWindow() {
-        //this.currentWindow = new ArrayList<
-        this.windowSizeGBN = 1;
-        for(int i = 0; i < windowSizeGBN; i++){
-            packetStatusCode.add(1);
+
+     /**
+    * Set the window size from the program parameters
+    **/
+    public void setWindowSize(int windowSize){
+        if(usingTCP)
+        {
+            this.windowSizeTCP=windowSize;
+            this.currentWindow = new ArrayList<Packet>(this.windowSize);
+            this.initializeWindow();
         }
-        ///System.out.println(packetStatusCode);
+        else
+        {
+            this.initializeWindow();
+        }
+      
+    }
+
+    public void initializeWindow() {
+        if(usingTCP)
+        {
+            for(int i = 0; i < windowSizeTCP; i++){
+                packetStatusCode.add(1);
+            }
+        }
+        else{
+            //this.currentWindow = new ArrayList<
+            this.windowSizeGBN = 1;
+            for(int i = 0; i < windowSizeGBN; i++){
+                packetStatusCode.add(1);
+            }
+            ///System.out.println(packetStatusCode);
+        }
+        
     }
 
     /**
@@ -226,4 +253,6 @@ public class ReceiverTransport
           usingTCP=true;
         }
     }
+
+
 }

@@ -38,6 +38,7 @@ public class NetworkSimulator
 
         //setting window size
         st.setWindowSize(Integer.parseInt(args[4]));
+        rt.setWindowSize(Integer.parseInt(args[4]));
 
         //setting protocol type
         st.setProtocol(Integer.parseInt(args[5]));
