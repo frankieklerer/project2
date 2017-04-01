@@ -80,6 +80,11 @@ public class SenderTransport
                 // add packet to current window
                 currentWindow.add(newPacket);
 
+                for(int z = 0; z < currentWindow.size(); z++)
+                {
+                  System.out.println("current window at index " + z + " holds " + currentWindow.get(z).getSeqnum());
+                }
+
                 // place new packet in hash map with associated sequence number
                 packets.put(i, newPacket);
 
@@ -251,7 +256,7 @@ public class SenderTransport
       //System.out.println(nextPacketSeqNum);
 
       // expand status code 
-      packetStatusCode.add(nextPacketSeqNum, 1);
+      packetStatusCode.add(1);
       System.out.println("Placing status code of 1 for packet " + nextPacketSeqNum);
 
       currentWindow.remove(0);
