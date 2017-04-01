@@ -80,11 +80,6 @@ public class SenderTransport
                 // add packet to current window
                 currentWindow.add(newPacket);
 
-                for(int z = 0; z < currentWindow.size(); z++)
-                {
-                  System.out.println("current window at index " + z + " holds " + currentWindow.get(z).getSeqnum());
-                }
-
                 // place new packet in hash map with associated sequence number
                 packets.put(i, newPacket);
 
@@ -122,6 +117,12 @@ public class SenderTransport
 
             // get the ACK number of the packet
             int ackNum = receivedPacket.getAcknum();
+            if(timerOn)
+            {
+                timeline.stopTimer();
+                timerOn = false;
+            }
+
 
             // if the packet is corrupt
             if(receivedPacket.isCorrupt()){
@@ -151,6 +152,7 @@ public class SenderTransport
               }
 
             } else { // received an uncorrupted ACK
+<<<<<<< HEAD
               
               // stop the timer
               if(timerOn)
@@ -159,6 +161,9 @@ public class SenderTransport
                 timerOn = false;
               }
               
+=======
+                              
+>>>>>>> b40935eee51759b30b2680f698c28497a4db4d1b
               // if the packet has already been ACKed, then the receiver is confused/received a corrupted packet
               if(packetStatusCode.get(ackNum) == 3){
 
@@ -185,38 +190,39 @@ public class SenderTransport
                 // set it as ack
                 moveWindow(ackNum); 
 
-                // find where the packet is in current window
-                int indexOfPacket = currentWindow.indexOf(receivedPacket);
-
                 // check if there are unACKed packets before this packet 
-                for(int j = 0; j < indexOfPacket; j++){
+                for(int j = 0; j < ackNum; j++){
 
-                  Packet unACKed = currentWindow.get(j);
+                 // Packet unACKed = currentWindow.get(j);
 
                   // if they still have not been ACKed
-                  if(packetStatusCode.get(unACKed.getAcknum()) == 2){
+                  if(packetStatusCode.get(j) == 2){
 
-                    System.out.println("Cumulative ACK for Packet " + unACKed.getAcknum());
+                    System.out.println("Cumulative ACK for Packet " + j);
 
                     // ack them all
-                    packetStatusCode.set(unACKed.getAcknum(), 3);
-                    moveWindow(unACKed.getAcknum());
+                    packetStatusCode.set(j, 3);
+                    moveWindow(j);
                   }
                  }
 
                 
                 }
               }
+<<<<<<< HEAD
 
               if(!timerOn){
                   timeline.startTimer(50);
                   timerOn = true;
               }
+=======
+>>>>>>> b40935eee51759b30b2680f698c28497a4db4d1b
           }
     }
 
     public void timerExpired()
     { 
+      timerOn = false;
 
         if(usingTCP){
 
@@ -224,12 +230,17 @@ public class SenderTransport
             //when timeout resend all sent but unacked pkts
 
             System.out.println("Timer for oldest inflight packet has expired, resend all sent but unacked packets");
+<<<<<<< HEAD
             
+=======
+           
+>>>>>>> b40935eee51759b30b2680f698c28497a4db4d1b
             // for all the packets in the current window
-              for(int i = 0; i < currentWindow.size(); i++){
+              for(int i = 0; i < sequenceNumber; i++){
 
                 // that have been sent but not yet ACKed
                 if(packetStatusCode.get(i) == 2){
+
 
                   Packet toBeResent = currentWindow.get(i);
 
