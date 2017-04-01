@@ -3,8 +3,7 @@ import java.util.*;
 /**
  * A class which represents a packet
  */
-public class Packet
-{
+public class Packet{
     
     private Message msg; //the enclosed message
     private int seqnum; //packets seq. number
@@ -13,8 +12,7 @@ public class Packet
 
     Random ran; //random number generator
 
-    public Packet(Message msg, int seqnum, int acknum, int checksum)
-    {
+    public Packet(Message msg, int seqnum, int acknum, int checksum){
         this.msg=msg;
         this.seqnum=seqnum;
         this.acknum=acknum;
@@ -23,8 +21,7 @@ public class Packet
         this.checksum = calculateCheckSum();
     }
 
-    public Packet(Message msg, int seqnum, int acknum)
-    {
+    public Packet(Message msg, int seqnum, int acknum){
         this.msg=msg;
         this.seqnum=seqnum;
         this.acknum=acknum;
@@ -51,11 +48,9 @@ public class Packet
     
     //if the calculated check sum is equal to the checksum on packet, then it is not corrupt
     public boolean isCorrupt(){
-        if(checksum == calculateCheckSum())
-        {
+        if(checksum == calculateCheckSum()){
           return false;
-        }
-        else
+        } else
             return true;
     }
     

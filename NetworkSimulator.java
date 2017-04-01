@@ -1,8 +1,7 @@
 import java.util.*;
 import java.io.FileReader;
 
-public class NetworkSimulator
-{
+public class NetworkSimulator{
     public static int DEBUG;
     /**
      * Main method with follwing variables
@@ -11,13 +10,11 @@ public class NetworkSimulator
      * @param args[2] loss probability
      * @param args[3] curroption probability
      */
-    public static void main(String[] args)
-    {
+    public static void main(String[] args){
         //current event to process
         Event currentEvent;
         //checking to see if enough arguements have been sent    
-        if(args.length<5)
-        {
+        if(args.length<5){
             System.out.println("need at least 5 arguements");
             System.exit(1);
         }
@@ -46,23 +43,20 @@ public class NetworkSimulator
         DEBUG = Integer.parseInt(args[6]);
 
         //this loop will run while there are events in the priority queue
-        while(true)
-        {
+        while(true){
             //get next event
             currentEvent = tl.returnNextEvent();
             //if no event present, break out
             if(currentEvent==null)
                 break;
             //if event is time to send a message, call the send message function of the sender application.   
-            if(currentEvent.getType()==Event.MESSAGESEND)
-            {
+            if(currentEvent.getType()==Event.MESSAGESEND){
                 sa.sendMessage();
                 if(DEBUG>0)
                     System.out.println("Message sent from sender to receiver at time " + currentEvent.getTime());   
             }
             //if event is a message arrival
-            else if (currentEvent.getType()==Event.MESSAGEARRIVE)
-            {
+            else if (currentEvent.getType()==Event.MESSAGEARRIVE){
                 //if it arrives at the sender, call the get packet from the sender
                 if(currentEvent.getHost()==Event.SENDER){
                     if(DEBUG>0)
@@ -77,8 +71,7 @@ public class NetworkSimulator
                 }
             }
             //If event is an expired timer, call the timerExpired method in the sender transport.
-            else if (currentEvent.getType()==Event.TIMER)
-            {
+            else if (currentEvent.getType()==Event.TIMER){
                 if(DEBUG>0)
                     System.out.println("Timer expired at time " + currentEvent.getTime());
 
@@ -89,8 +82,7 @@ public class NetworkSimulator
             {//do nothing if it is just a turned off timer.
             }
             //this should not happen.
-            else
-            {
+            else{
                 System.out.println("Unidentified event type!");
                 System.exit(1);
             }
@@ -99,14 +91,13 @@ public class NetworkSimulator
     }
 
     //reading in file line by line.
-    public static ArrayList<String> readFile(String fileName)
-    {
+    public static ArrayList<String> readFile(String fileName){
         ArrayList<String> messageArray = new ArrayList<String>();
         Scanner sc=null;
         try{
             sc = new Scanner(new FileReader(fileName));
-        }catch(Exception e)
-        {System.out.println("Could not open file " + e);}
+        }catch(Exception e){
+            System.out.println("Could not open file " + e);}
 
         while(sc.hasNextLine())
             messageArray.add(sc.nextLine());

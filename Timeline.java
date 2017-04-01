@@ -5,8 +5,7 @@ import java.util.*;
  * This class represents the timeline of events in a priority queue
  */
 
-public class Timeline
-{
+public class Timeline{
     private PriorityQueue<Event> events; //timeline of events. 
     private int timeBetweenSends; //Avg. time between two packets being sent
     private int totalMessagesToSend; //total number of messages to send
@@ -20,8 +19,7 @@ public class Timeline
     /**
      * A constructor to initialize variables.
      */
-    public Timeline(int time, int numOfMessages)
-    {
+    public Timeline(int time, int numOfMessages){
         events = new PriorityQueue<Event>();
         timeBetweenSends=time;
         totalMessagesToSend = numOfMessages;
@@ -37,8 +35,7 @@ public class Timeline
      * Getting next event. It it is a send event, and there are still messages that need to be sent, sending the next one.
      */
 
-    public Event returnNextEvent()
-    {
+    public Event returnNextEvent(){
         Event tmp = events.poll();
         if(tmp==null)
             return tmp;
@@ -56,8 +53,7 @@ public class Timeline
      * Creating a send event.First generating a random enumber using the exponential distribution with average timeBetweenSends and then adding the event.
      */
 
-    public void createSendEvent()
-    {
+    public void createSendEvent(){
         double tmp = ran.nextFloat();
         tmp=(tmp==0)?0.00001:tmp;
         int time = (int)(timeBetweenSends*(-Math.log(tmp))+timeSoFar);
@@ -73,13 +69,11 @@ public class Timeline
      * @param to who are we sending the packet to
      */
     
-    public void createArriveEvent(Packet pkt, int to)
-    {
+    public void createArriveEvent(Packet pkt, int to){
         lastArrivalTime = (lastArrivalTime>timeSoFar)?lastArrivalTime:timeSoFar;
         lastArrivalTime = 1+(int)(ran.nextFloat()*9)+lastArrivalTime;
 
-        if(NetworkSimulator.DEBUG>2)
-        {
+        if(NetworkSimulator.DEBUG>2){
             String tmp = (to==Event.SENDER)? "sender" : "receiver";
             System.out.println("inserting futurre arrive event at " + timeSoFar + " with time: " + lastArrivalTime + "to :" +tmp);
         }
@@ -91,10 +85,8 @@ public class Timeline
      * Starting timer.If it si already started it prints out an error message. setting timerPointer to point at timer event.
      * @ param increment timeout for timer
      */
-    public void startTimer(int increment)
-    {
-        if(timerPointer!=null)
-        {
+    public void startTimer(int increment){
+        if(timerPointer!=null){
             System.out.println("Timer is allready on!");
             return;
         }
@@ -108,10 +100,8 @@ public class Timeline
      * Kills timer and sets timerPointer to null
      */
 
-    public void stopTimer()
-    {
-        if(timerPointer==null)
-        {
+    public void stopTimer(){
+        if(timerPointer==null){
             System.out.println("Timer is not on!");
             return;
         }     

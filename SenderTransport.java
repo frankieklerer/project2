@@ -140,16 +140,19 @@ public class SenderTransport
 
                   networkLayer.sendPacket(resend, Event.RECEIVER);
 
+                  // re starts timer for oldest unACKed packet
                   if(!timerOn){
                     timeline.startTimer(50);
                     timerOn = true;
                   }
+
                   System.out.println("Packet " + ackNum + " has been resent");
                 }
               }
 
             } else { // received an uncorrupted ACK
-                
+              
+              // stop the timer
               if(timerOn)
               {
                 timeline.stopTimer();
@@ -204,10 +207,11 @@ public class SenderTransport
                 
                 }
               }
+
               if(!timerOn){
                   timeline.startTimer(50);
                   timerOn = true;
-                    }
+              }
           }
     }
 
@@ -217,10 +221,10 @@ public class SenderTransport
         if(usingTCP){
 
         } else {
-            //when timeout 
-            //resend all sent but unacked pkts
-            //need to write this --- how to know when timeout actually occurs
+            //when timeout resend all sent but unacked pkts
+
             System.out.println("Timer for oldest inflight packet has expired, resend all sent but unacked packets");
+            
             // for all the packets in the current window
               for(int i = 0; i < currentWindow.size(); i++){
 
