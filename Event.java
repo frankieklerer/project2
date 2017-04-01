@@ -1,8 +1,7 @@
 /**
  * A class which represents an event and is used in the Timeline class
  */
-public class Event implements Comparable<Event>
-{
+public class Event implements Comparable<Event>{
 
     int time; //time of the event
     int type; //type of event
@@ -22,8 +21,7 @@ public class Event implements Comparable<Event>
      * @param type type of event
      * @param host where event is happening.
      */
-    public Event(int time, int type, int host)
-    {
+    public Event(int time, int type, int host){
         this.time=time;
         this.type=type;
         this.host=host;
@@ -37,8 +35,7 @@ public class Event implements Comparable<Event>
      * @param pkt packet that is arriving.
      */
 
-    public Event(int time, int type, int host, Packet pkt)
-    {
+    public Event(int time, int type, int host, Packet pkt){
         this.time=time;
         this.type=type;
         this.host=host;
@@ -49,10 +46,8 @@ public class Event implements Comparable<Event>
      * Kills timer by simply setting its event type to KILLEDTIMER
      */
 
-    public void killTimer()
-    {
-        if(type!=TIMER)
-        {
+    public void killTimer(){
+        if(type!=TIMER){
             System.out.println("Trying to stop a timer on an event that is not a timer! should not happen!");
             System.exit(1);
         }
@@ -60,28 +55,23 @@ public class Event implements Comparable<Event>
     }
     
 
-    public int getTime()
-    {
-        return time;
+    public int getTime(){
+        return this.time;
     }
 
-    public int getType()
-    {
-        return type;
+    public int getType(){
+        return this.type;
     }
 
-    public int getHost()
-    {
-        return host;
+    public int getHost(){
+        return this.host;
     }
 
-    public Packet getPacket()
-    {
-        return pkt;
+    public Packet getPacket(){
+        return this.pkt;
     }
 
-    public int compareTo(Event e)
-    {
+    public int compareTo(Event e){
         return this.time-e.time;
 
     }
