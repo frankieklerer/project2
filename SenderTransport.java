@@ -58,6 +58,8 @@ public class SenderTransport
     
         if(usingTCP){
 
+          
+
         }else{
 
           int packetSeqNum = sequenceNumber;
@@ -117,6 +119,7 @@ public class SenderTransport
 
             // get the ACK number of the packet
             int ackNum = receivedPacket.getAcknum();
+
             if(timerOn)
             {
                 timeline.stopTimer();
@@ -152,18 +155,7 @@ public class SenderTransport
               }
 
             } else { // received an uncorrupted ACK
-<<<<<<< HEAD
-              
-              // stop the timer
-              if(timerOn)
-              {
-                timeline.stopTimer();
-                timerOn = false;
-              }
-              
-=======
-                              
->>>>>>> b40935eee51759b30b2680f698c28497a4db4d1b
+
               // if the packet has already been ACKed, then the receiver is confused/received a corrupted packet
               if(packetStatusCode.get(ackNum) == 3){
 
@@ -209,14 +201,6 @@ public class SenderTransport
                 
                 }
               }
-<<<<<<< HEAD
-
-              if(!timerOn){
-                  timeline.startTimer(50);
-                  timerOn = true;
-              }
-=======
->>>>>>> b40935eee51759b30b2680f698c28497a4db4d1b
           }
     }
 
@@ -230,11 +214,7 @@ public class SenderTransport
             //when timeout resend all sent but unacked pkts
 
             System.out.println("Timer for oldest inflight packet has expired, resend all sent but unacked packets");
-<<<<<<< HEAD
-            
-=======
-           
->>>>>>> b40935eee51759b30b2680f698c28497a4db4d1b
+
             // for all the packets in the current window
               for(int i = 0; i < sequenceNumber; i++){
 
