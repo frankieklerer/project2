@@ -36,47 +36,84 @@ public class ReceiverTransport
         this.initializeWindow();
     }
 
-    public void receiveMessage(Packet pkt){ //out of order pkts?
+    public void receiveMessage(Packet pkt){ 
+
+        // if protocol is TCP
         if(usingTCP){
-            if(pkt.isCorrupt()){ // resend most recent ack
-                for(int i = 0; i < packetStatusCode.size(); i++ ){
-                    if(packetStatusCode.get(i) == 2){
-                        Packet p9 = new Packet(new Message(" "), -1, i);
-                        networkLayer.sendPacket(p9, Event.SENDER);
-                        System.out.println("Packet is corrupt, resend ack highest in order packet: " + i);
-                    } 
+            Packet resendTCP=null;
+            int highestSeqNumACKedTCP=0;
+
+            // get the sequence number of the packet
+            int packetSeqNumTCP = pkt.getSeqnum();
+            boolean waiting = false; 
+
+            // if the packet is corrupt, resend most recent ACK
+            if(pkt.isCorrupt()){ 
+
+               // if the first packet is corrupted
+                if(packetSeqNumTCP == 0){
+                    // resend first packet (-1 because no seq num in ack)
+                    resendTCP = new Packet(new Message(" "), -1, 0);
+                    networkLayer.sendPacket(resendTCP, Event.SENDER);
+                }else{
+
+                    // find the sequence number of the highest ACKed packet
+                    for (int i = packetSeqNumTCP; i > 0; i--){
+                        if(packetStatusCode.get(i) == 2){
+                            highestSeqNumACKedTCP = i;
+                            break;
+                        }
+                    }
+
+                    // resend packet with last highest ack (-1 because no seq num in ack)
+                    resendTCP = new Packet(new Message(" "), -1, highestSeqNumACKedTCP);
+                    networkLayer.sendPacket(resendTCP, Event.SENDER);
+                    System.out.println("ACK for packet " + highestSeqNumACKedTCP + " has been resent because it was corrupt.");
                 }
 
-            } 
-            else {
-                int seqnum = pkt.getSeqnum();
-                boolean waiting = false;
-                
+            // if the packet is not corrupt
+            } else {
 
-                for(int i = 0; i < seqnum; i++){
-                    // a packet before the one you have just received is still waiting to be received
+                // for every packet before the received packet
+                for(int i = packetSeqNumTCP; i >0; i--){
+
+                    // if there is a packet before it whose ACK you are awaiting
                     if(packetStatusCode.get(i) == 1){
+                        // must buffer the packet
                         waiting = true;
                         
+                        // add the packet to the buffered list
                         bufferedPacketList.add(pkt);
 
-                        Packet p = new Packet(pkt.getMessage(), -1, i+1);
-                        networkLayer.sendPacket(p, Event.SENDER);
+                        // find the sequence number of the highest ACKed packet
+                        for (int j = packetSeqNumTCP; j > 0; j--){
+                            if(packetStatusCode.get(j) == 2){
+                                highestSeqNumACKedTCP = j;
+                                break;
+                            }
+                        }
+
+                        // resend packet with last highest ack (-1 because no seq num in ack)
+                        resendTCP = new Packet(new Message(" "), -1, highestSeqNumACKedTCP);
+                        networkLayer.sendPacket(resendTCP, Event.SENDER);
+                        System.out.println("ACK for packet " + highestSeqNumACKedTCP + " has been resent because of a gap in the window.");
                     }
                 }
 
                 if(!waiting){
-                    Packet p11 = new Packet(pkt.getMessage(), -1, seqnum+1);
-                    networkLayer.sendPacket(p11, Event.SENDER);
-                    packetStatusCode.set(seqnum, 2);
+                    
+                    // if all packets before it have been ACKed
+                    Packet packetACKTCP = new Packet(new Message(" "), -1, packetSeqNumTCP);
+                    networkLayer.sendPacket(packetACKTCP, Event.SENDER);
+                    packetStatusCode.set(packetSeqNumTCP, 2);
+                    System.out.println("ACK sent for Packet " + packetSeqNumTCP);
+                    ra.receiveMessage(pkt.getMessage());
                 }
                 moveWindow();
                 updateBuffer();
             }
 
-        }
-
-        else{
+        }else{
 
             int packetSeqNum = pkt.getSeqnum();
             System.out.println("Receiver has just received packet " + packetSeqNum);
@@ -213,7 +250,7 @@ public class ReceiverTransport
         if(usingTCP)
         {
             this.windowSizeTCP=windowSize;
-            this.currentWindow = new ArrayList<Packet>(this.windowSize);
+            this.currentWindow = new ArrayList<Packet>(this.windowSizeTCP);
             this.initializeWindow();
         }
         else

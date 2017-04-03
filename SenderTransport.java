@@ -47,115 +47,125 @@ public class SenderTransport
     }
 
     public void initialize(){
+      // set the sequence number to 0
       this.sequenceNumber = 0;
-       this.timerOn = false;
-        if(usingTCP) {
-          tcpACKnum = 0;
-          this.ackCountTCP = new ArrayList<Integer>();
-        }else{
-            
-        }     
+
+      // set the timer on to false
+      this.timerOn = false;
+
+      if(usingTCP) {
+        // for TCP, set these variables
+        tcpACKnum = 0;
+        this.ackCountTCP = new ArrayList<Integer>();
+      }else{
+          
+      }     
     }
 
     public void sendMessage(Message msg){
 
-    
-        if(usingTCP){
-          int packetSeqNum = sequenceNumber;
-          boolean sent = false;
-          
+      // if the protocol is TCP
+      if(usingTCP){
 
-<<<<<<< HEAD
-          
+        // set the packet sequence number to the global sequence number
+        int packetSeqNum = sequenceNumber;
 
-        }else{
-=======
-          // increment sequence number
-          sequenceNumber++;
-
-          for(int i = 0; i < packetStatusCode.size(); i++){
-
-              // if the packet has not yet been sent
-              if(packetStatusCode.get(i) == 1 && packetSeqNum == tcpACKnum){
-
-               // set the packet status code to sent but waiting for ACK
-                packetStatusCode.set(i, 2);
-
-                //create a new packet with the message (-1 because no ack num)
-                Packet newPacket = new Packet(msg, i,-1);
-
-                // add packet to current window
-                currentWindow.add(newPacket);
-
-                // place new packet in hash map with associated sequence number
-                packets.put(i, newPacket);
-
-                System.out.println("Packet " + i + " has been sent.");
-
-                // send the packet to the network layer
-                networkLayer.sendPacket(newPacket, Event.RECEIVER);
-                sent = true;
-                ackCountTCP.add(0);
-
-                if(!timerOn){
-                  timeline.startTimer(50);
-                  timerOn = true;
-                }
-              }
-
-              if(sent){
-                break;
-              }
-          }
-        }
-
-        else{
->>>>>>> 4fb04c5e61a0a5059dd971c08c2863412080236e
-
-          int packetSeqNum = sequenceNumber;
-          boolean sent = false;
-
-          // increment sequence number
-          sequenceNumber++;
-
-          for(int i = 0; i < packetStatusCode.size(); i++){
-
-              // if the packet has not yet been sent
-              if(packetStatusCode.get(i) == 1){
-
-               // set the packet status code to sent but waiting for ACK
-                packetStatusCode.set(i, 2);
-
-                //create a new packet with the message (-1 because no ack num)
-                Packet newPacket = new Packet(msg, i,-1);
-
-                // add packet to current window
-                currentWindow.add(newPacket);
-
-                // place new packet in hash map with associated sequence number
-                packets.put(i, newPacket);
-
-                System.out.println("Packet " + i + " has been sent.");
-
-                // send the packet to the network layer
-                networkLayer.sendPacket(newPacket, Event.RECEIVER);
-                sent = true;
-
-                if(!timerOn){
-                  timeline.startTimer(50);
-                  timerOn = true;
-                }
-              }
-
-              if(sent){
-                break;
-              }
-
-          }
-
-        }
+        // set the sent as false
+        boolean sent = false;
         
+        // increment sequence number
+        sequenceNumber++;
 
+        // for every packet in the status code awway
+        for(int i = 0; i < packetStatusCode.size(); i++){
+
+            // if the packet has not yet been sent AND the sequence number is equal to the tcpACKnum
+            if((packetStatusCode.get(i) == 1) && (packetSeqNum == tcpACKnum)){
+
+             // set the packet status code to sent but waiting for ACK
+              packetStatusCode.set(i, 2);
+
+              //create a new packet with the message (-1 because no ack num)
+              Packet newPacket = new Packet(msg, i,-1);
+
+              // add packet to current window
+              currentWindow.add(newPacket);
+
+              // place new packet in hash map with associated sequence number
+              packets.put(i, newPacket);
+
+              System.out.println("Packet " + i + " has been sent.");
+
+              // send the packet to the network layer
+              networkLayer.sendPacket(newPacket, Event.RECEIVER);
+
+              // set sent as true
+              sent = true;
+
+              //initialize the ACK count for the packet to 0
+              ackCountTCP.add(0);
+
+              if(!timerOn){
+                timeline.startTimer(50);
+                timerOn = true;
+              }
+            }
+
+          // if the packets in the window have already been sent, break out of the code
+          if(sent){
+            break;
+          }
+        }
+
+      }else{ //if the protocol is GBN
+
+        // initialize the packet sequence number as the global sequence number
+        int packetSeqNum = sequenceNumber;
+
+        // set the sent boolean to false
+        boolean sent = false;
+
+        // increment sequence number
+        sequenceNumber++;
+
+        // for every packet in the status code array
+        for(int i = 0; i < packetStatusCode.size(); i++){
+
+            // if the packet has not yet been sent
+            if(packetStatusCode.get(i) == 1){
+
+             // set the packet status code to sent but waiting for ACK
+              packetStatusCode.set(i, 2);
+
+              //create a new packet with the message (-1 because no ack num)
+              Packet newPacket = new Packet(msg, i,-1);
+
+              // add packet to current window
+              currentWindow.add(newPacket);
+
+              // place new packet in hash map with associated sequence number
+              packets.put(i, newPacket);
+
+              System.out.println("Packet " + i + " has been sent.");
+
+              // send the packet to the network layer
+              networkLayer.sendPacket(newPacket, Event.RECEIVER);
+
+              // set the sent variable to true
+              sent = true;
+
+              if(!timerOn){
+                timeline.startTimer(50);
+                timerOn = true;
+              }
+            }
+
+        if(sent){
+          break;
+        }
+
+        }
+      }
     }
 
     /**
@@ -164,45 +174,52 @@ public class SenderTransport
     public void receiveMessage(Packet receivedPacket){
 
         if(usingTCP){
-            // if the packet is corrupt
-            if(receivedPacket.isCorrupt())
-            {
-              //if pkt is corrupt, wait for timeout.
-              System.out.println("Received ACK is corrupt, wait for timeout or duplicate acks.");
-            }
-            else //received not corrupted ack. 
-            {
-               // get the ACK number of the packet
-                int ackNum = receivedPacket.getAcknum();
 
-                if(packetStatusCode.get(ackNum) == 3)
-                {
-                  int count = ackCountTCP.get(ackNum);
-                  ackCountTCP.set(ackNum, count++);
-                  if(ackCountTCP.get(ackNum) == 3)
-                  {
-                      // fetch packet object from hash map with the ack num
-                      Packet resend = packets.get(ackNum);
+          // if the packet is corrupt
+          if(receivedPacket.isCorrupt()){
 
-                      networkLayer.sendPacket(resend, Event.RECEIVER);
+            //if pkt is corrupt, wait for timeout.
+            System.out.println("Received ACK is corrupt, wait for timeout or duplicate acks.");
 
-                      System.out.println("Packet " + ackNum + "has been resent");
-                  }
+           //received not corrupted ack. 
+          }else {
+             // get the ACK number of the packet
+              int ackNum = receivedPacket.getAcknum();
+
+              // if the packet has already been sent and ACKed
+              if(packetStatusCode.get(ackNum) == 3){
+
+                // get the amount of times it has been ACKed
+                int count = ackCountTCP.get(ackNum);
+
+                // increment the ACK
+                ackCountTCP.set(ackNum, count++);
+
+                // if the incremented ACK num is 3
+                if(ackCountTCP.get(ackNum) == 3){
+
+                  // fetch packet object from hash map with the ack num
+                  Packet resend = packets.get(ackNum);
+
+                  networkLayer.sendPacket(resend, Event.RECEIVER);
+
+                  System.out.println("Packet " + ackNum + "has been resent");
                 }
 
-                else if(packetStatusCode.get(ackNum) == 2) //sent but ack not yet recieved
-                {
-                    System.out.println("ACK received for Packet " + ackNum);
+              //if the received packet it sent but not acked
+              }else if(packetStatusCode.get(ackNum) == 2) {
 
-                    // set it as ack
-                    moveWindow(ackNum); 
+                  System.out.println("ACK received for Packet " + ackNum);
 
-                    // check if there are unACKed packets before this packet 
-                    for(int j = 0; j < ackNum; j++){
+                  // set it as ack
+                  moveWindow(ackNum); 
 
-                     // Packet unACKed = currentWindow.get(j);
+                  // check if there are unACKed packets before this packet 
+                  for(int j = 0; j < ackNum; j++){
 
-                      // if they still have not been ACKed
+                   // Packet unACKed = currentWindow.get(j);
+
+                    // if they still have not been ACKed
                     if(packetStatusCode.get(j) == 2){
 
                         System.out.println("Cumulative ACK for Packet " + j);
@@ -210,26 +227,18 @@ public class SenderTransport
                         // ack them all
                         packetStatusCode.set(j, 3);
                         moveWindow(j);
-                      }
-                 }
-   
-                }
-                
+                    }
+                  }
+              }
+          }
 
 
-            }
+          if(timerOn){
+              timeline.stopTimer();
+              timerOn = false;
+          }
 
-
-
-
-            if(timerOn)
-            {
-                timeline.stopTimer();
-                timerOn = false;
-            }
-        }
-
-        else{
+        }else{ // using GBN
 
             // get the ACK number of the packet
             int ackNum = receivedPacket.getAcknum();
@@ -355,21 +364,27 @@ public class SenderTransport
 
             System.out.println("Timer for oldest inflight packet has expired, resend all sent but unacked packets");
 
+            for(int i = 0; i < currentWindow.size(); i++){
+              System.out.println("Packet " + currentWindow.get(i).getSeqnum() + " is in current window with status code "  + packetStatusCode.get(i));
+            }
+
             // for all the packets in the current window
               for(int i = 0; i < sequenceNumber; i++){
 
                 // that have been sent but not yet ACKed
                 if(packetStatusCode.get(i) == 2){
 
-
-                  Packet toBeResent = currentWindow.get(i);
+                  //Packet toBeResent = currentWindow.get(i);
+                  int packetSeqNumToBeResent = packetStatusCode.indexOf(i);
 
                   // fetch packet object from hash map with the ack num
-                  Packet resend = packets.get(toBeResent.getSeqnum());
+                  //Packet resend = packets.get(toBeResent.getSeqnum());
+                  Packet resend = packets.get(packetSeqNumToBeResent);
 
                   networkLayer.sendPacket(resend, Event.RECEIVER);
 
-                  System.out.println("Packet " + toBeResent.getSeqnum() + " has been resent");
+                  //System.out.println("Packet " + toBeResent.getSeqnum() + " has been resent");
+                  System.out.println("Packet " + packetSeqNumToBeResent + " has been resent");
 
                   if(!timerOn){
                    timeline.startTimer(50);
