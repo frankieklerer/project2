@@ -156,7 +156,7 @@ public class ReceiverTransport
 
                  for(int i = 0; i < packetSeqNum; i++){
                     // if there is an unACKed packet before this
-                    if(packetStatusCode.get(i) == 1){
+                    if((packetStatusCode.get(i) == 1) && !gap ){
 
                         int highestinOrderAck = i-1;
 
@@ -166,8 +166,7 @@ public class ReceiverTransport
                             networkLayer.sendPacket(resend, Event.SENDER);
                             System.out.println("ACK for packet " + 0 + " has been resent because gap in ACKs.");
                             gap = true;
-                        }
-                        else{
+                        }else{
                             // resend ACK for most recently ACKed packet
                             // resend packet with last highest ack (-1 because no seq num in ack)
                             resend = new Packet(new Message(" "), -1, highestinOrderAck);
@@ -177,8 +176,8 @@ public class ReceiverTransport
                         }   
                     }
                 }
-                if(!gap)
-                {
+
+                if(!gap){
                       // if all packets before it have been ACKed
                     Packet packetACK = new Packet(new Message(" "), -1, packetSeqNum);
                     networkLayer.sendPacket(packetACK, Event.SENDER);
@@ -240,6 +239,15 @@ public class ReceiverTransport
             else
                 continue;
         }
+    }
+
+    public void analyzeCurrentWindow(){
+        ArrayList<String> toPrint = new ArrayList<String>();
+        for(int i = 0; i < currentWindow.size(); i++){
+            toPrint.add("Packet " + currentWindow.get(i).getSeqnum() + "("  + packetStatusCode.get(i) + ")");
+        }
+
+        System.out.println(toPrint);
     }
 
 

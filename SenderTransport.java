@@ -256,6 +256,8 @@ public class SenderTransport
               //if pkt is corrupt, resend all sent but unacked messages in current window (2)
               System.out.println("Received ACK is corrupt, resending all sent but unacked packets in window.");
 
+              analyzeCurrentWindow();
+
               // for all the packets in the current window
               for(int i = 0; i < currentWindow.size(); i++){
 
@@ -336,55 +338,60 @@ public class SenderTransport
 
           System.out.println("Timer for oldest inflight packet has expired, resend oldest unACKed packet");
 
-          for(int i = 0; i < sequenceNumber; i++)
-          {
-              if(packetStatusCode.get(i) == 2)
-              {
-                Packet toBeResent = currentWindow.get(i);
+          analyzeCurrentWindow();
 
-                // fetch packet object from hash map with the ack num
-                Packet resend = packets.get(toBeResent.getSeqnum());
+          // for all the packets in the current window
+          for(int i = 0; i < currentWindow.size(); i++){
 
-                networkLayer.sendPacket(resend, Event.RECEIVER);
-                System.out.println("Packet " +  toBeResent.getSeqnum() + " has been resent.");
+            // get the packet number of the packet in current window
+            int packetNum = currentWindow.get(i).getSeqnum();
 
-                if(!timerOn){
-                   timeline.startTimer(50);
-                   timerOn = true;
-                  }
+            // that have been sent but not yet ACKed
+            if(packetStatusCode.get(i) == 2){
 
-                resent = true;
+              // get the packet object to be resent
+              Packet resend = packets.get(packetNum);
+
+              networkLayer.sendPacket(resend, Event.RECEIVER);
+
+              //System.out.println("Packet " + toBeResent.getSeqnum() + " has been resent");
+              System.out.println("Packet " + packetNum + " has been resent");
+
+              if(!timerOn){
+                 timeline.startTimer(50);
+                 timerOn = true;
               }
+
+              resent = true;
+            }
               
-              if(resent)
-                break;
+            if(resent)
+              break;
           }
+          
         } else {
             //when timeout resend all sent but unacked pkts
 
             System.out.println("Timer for oldest inflight packet has expired, resend all sent but unacked packets");
 
-            for(int i = 0; i < currentWindow.size(); i++){
-              System.out.println("Packet " + currentWindow.get(i).getSeqnum() + " is in current window with status code "  + packetStatusCode.get(i));
-            }
+            analyzeCurrentWindow();
 
             // for all the packets in the current window
-              for(int i = 0; i < sequenceNumber; i++){
+              for(int i = 0; i < currentWindow.size(); i++){
+
+                // get the packet number of the packet in current window
+                int packetNum = currentWindow.get(i).getSeqnum();
 
                 // that have been sent but not yet ACKed
                 if(packetStatusCode.get(i) == 2){
 
-                  //Packet toBeResent = currentWindow.get(i);
-                  int packetSeqNumToBeResent = packetStatusCode.indexOf(i);
-
-                  // fetch packet object from hash map with the ack num
-                  //Packet resend = packets.get(toBeResent.getSeqnum());
-                  Packet resend = packets.get(packetSeqNumToBeResent);
+                  // get the packet object to be resent
+                  Packet resend = packets.get(packetNum);
 
                   networkLayer.sendPacket(resend, Event.RECEIVER);
 
                   //System.out.println("Packet " + toBeResent.getSeqnum() + " has been resent");
-                  System.out.println("Packet " + packetSeqNumToBeResent + " has been resent");
+                  System.out.println("Packet " + packetNum + " has been resent");
 
                   if(!timerOn){
                    timeline.startTimer(50);
@@ -413,6 +420,15 @@ public class SenderTransport
       System.out.println("Removing packet " + packetAckNum + " from current window");
 
     }
+
+    public void analyzeCurrentWindow(){
+        ArrayList<String> toPrint = new ArrayList<String>();
+        for(int i = 0; i < currentWindow.size(); i++){
+            toPrint.add("Packet " + currentWindow.get(i).getSeqnum() + "("  + packetStatusCode.get(i) + ")");
+        }
+
+        System.out.println(toPrint);
+    } 
 
     /**
     * Initialize the timeline class
