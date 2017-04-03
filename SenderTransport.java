@@ -325,7 +325,7 @@ public class SenderTransport
                 moveWindow(ackNum); 
 
                   // for all the packets in the current window
-                for(int i = 0; i < ackNum; i++){
+                for(int i = 0; i < currentWindow.size(); i++){
 
                   // get the packet number of the packet in current window
                   int packetNum = currentWindow.get(i).getSeqnum();
