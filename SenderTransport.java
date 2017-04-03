@@ -290,7 +290,7 @@ public class SenderTransport
                 Packet firstresend = packets.get(0);
                 networkLayer.sendPacket(firstresend, Event.RECEIVER);
                 lostFirst = true;
-                System.out.println("Packet " + 0 + " has been lost or corrupted and is being resent");
+                System.out.println("Packet " + 0 + " has been lost and is being resent");
 
                 analyzeCurrentWindow();
 
