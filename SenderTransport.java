@@ -414,7 +414,7 @@ public class SenderTransport
             if(resent)
               break;
           }
-          
+
         } else {
             //when timeout resend all sent but unacked pkts
 
@@ -478,7 +478,7 @@ public class SenderTransport
             toPrint.add("Packet " + currentWindow.get(i).getSeqnum() + "("  + packetStatusCode.get(i) + ")");
         }
 
-        System.out.println(toPrint);
+        System.out.println("Current Window: " + toPrint);
     } 
 
     /**

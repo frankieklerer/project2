@@ -228,36 +228,13 @@ public class ReceiverTransport
         }
     }
 
-     public void moveWindow(){
-        // 1 = in receiver window but nothing received
-        // 2 = in receiver window, recevied packet and sent ACK
-       
-        for(int i = 0; i < packetStatusCode.size(); i++)
-        {
-            if(packetStatusCode.get(i) == 1 )
-                continue;
-            else if(packetStatusCode.get(i) == 2)
-            {
-                if(packetStatusCode.get(i+1) == 2)
-                    continue;
-                else
-                {
-                    for(int j = i+1; j < i+1+windowSizeTCP; j++)
-                        packetStatusCode.add(1);
-                }   
-            }
-            else
-                continue;
-        }
-    }
-
     public void analyzeCurrentWindow(){
         ArrayList<String> toPrint = new ArrayList<String>();
         for(int i = 0; i < currentWindow.size(); i++){
             toPrint.add("Packet " + currentWindow.get(i).getSeqnum() + "("  + packetStatusCode.get(i) + ")");
         }
 
-        System.out.println(toPrint);
+        System.out.println("Current Window: " + toPrint);
     }
 
 
