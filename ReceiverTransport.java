@@ -111,11 +111,10 @@ public class ReceiverTransport
                     System.out.println("ACK sent for Packet " + packetSeqNumTCP);
                     ra.receiveMessage(pkt.getMessage());
                 }
-                moveWindow();
                 updateBuffer();
             }
 
-        }else{
+        }else{ // if using GBN
 
             // if the packet is corrupt, resend ACK for highest seqnum of packet with received ACK
             if(pkt.isCorrupt()) {
