@@ -270,51 +270,52 @@ public class SenderTransport
                     timeline.startTimer(50);
                     timerOn = true;
                   }
-                    }
-                  }
+                }
+              }
 
             } else {  // received an uncorrupted ACK
+
               boolean lostFirst = false;
-          // get the ACK number of the packet
+
+              // get the ACK number of the packet
               int ackNum = receivedPacket.getAcknum();
 
-              if(timerOn)
-              {
+              if(timerOn){
                   timeline.stopTimer();
                   timerOn = false;
               }
 
               //if first pkt was lost and receive an ACK for -1
-              if(ackNum == -1)
-              {
+              if(ackNum == -1){
                 Packet firstresend = packets.get(0);
                 networkLayer.sendPacket(firstresend, Event.RECEIVER);
                 lostFirst = true;
-                System.out.println("Packet " + 0 + " has been lost or corrupted and is being resent");
+                System.out.println("Packet " + 0 + " has been lost and is being resent");
+
                 analyzeCurrentWindow();
 
                  // for all the packets in the current window
-                for(int i = 0; i < currentWindow.size(); i++){
+                for(int i = 1; i < currentWindow.size(); i++){
 
                 // get the packet number of the packet in current window
                 int packetNum = currentWindow.get(i).getSeqnum();
 
-                // that have been sent but not yet ACKed
-                if(packetStatusCode.get(i) == 2){
+                  // that have been sent but not yet ACKed
+                  if(packetStatusCode.get(i) == 2){
 
-                  // get the packet object to be resent
-                  Packet resend = packets.get(packetNum);
+                    // get the packet object to be resent
+                    Packet resend = packets.get(packetNum);
 
-                  networkLayer.sendPacket(resend, Event.RECEIVER);
+                    networkLayer.sendPacket(resend, Event.RECEIVER);
 
-                  //System.out.println("Packet " + toBeResent.getSeqnum() + " has been resent");
-                  System.out.println("Packet " + packetNum + " has been resent");
+                    //System.out.println("Packet " + toBeResent.getSeqnum() + " has been resent");
+                    System.out.println("Packet " + packetNum + " has been resent because packet 0 was lost");
 
+                  }
                 }
               }
-              }
-              if(!lostFirst)
-              {
+
+              if(!lostFirst){
             
               // if sent but unACKed
               if(packetStatusCode.get(ackNum) == 2){
@@ -334,9 +335,9 @@ public class SenderTransport
 
                     System.out.println("Cumulative ACK for Packet " + i);
 
-                      // ack them all
-                      packetStatusCode.set(i, 3);
-                      moveWindow(i);
+                    // ack them all
+                    packetStatusCode.set(i, 3);
+                    moveWindow(i);
 
 
                   }
@@ -344,7 +345,8 @@ public class SenderTransport
 
                
                 }
-          // if the packet has already been ACKed, then the receiver is confused/received a corrupted packet
+
+            // if the packet has already been ACKed, then the receiver is confused/received a lost/corrupted packet
               if(packetStatusCode.get(ackNum) == 3){
 
                    // for all the packets in the current window
@@ -468,9 +470,9 @@ public class SenderTransport
       System.out.println("Removing packet " + packetAckNum + " from current window");
 
       if(!timerOn){
-                   timeline.startTimer(50);
-                   timerOn = true;
-                  }
+         timeline.startTimer(50);
+         timerOn = true;
+        }
 
     }
 
