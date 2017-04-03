@@ -122,11 +122,13 @@ public class SenderTransport
         // initialize the packet sequence number as the global sequence number
         int packetSeqNum = sequenceNumber;
 
+        // increment sequence number
+        sequenceNumber++;
+
         // set the sent boolean to false
         boolean sent = false;
 
-        // increment sequence number
-        sequenceNumber++;
+        
 
         // for every packet in the status code array
         for(int i = 0; i < packetStatusCode.size(); i++){
@@ -240,15 +242,7 @@ public class SenderTransport
 
         }else{ // using GBN
 
-            // get the ACK number of the packet
-            int ackNum = receivedPacket.getAcknum();
-
-            if(timerOn)
-            {
-                timeline.stopTimer();
-                timerOn = false;
-            }
-
+            
 
             // if the packet is corrupt
             if(receivedPacket.isCorrupt()){
@@ -263,9 +257,9 @@ public class SenderTransport
 
                 // that have been sent but not yet ACKed
                 if(packetStatusCode.get(i) == 2){
-
+                  int tempseq = i+1;
                   // fetch packet object from hash map with the ack num
-                  Packet resend = packets.get(ackNum);
+                  Packet resend = packets.get(tempseq);
 
                   networkLayer.sendPacket(resend, Event.RECEIVER);
 
@@ -275,31 +269,35 @@ public class SenderTransport
                     timerOn = true;
                   }
 
-                  System.out.println("Packet " + ackNum + " has been resent");
+                  System.out.println("Packet " + tempseq + " has been resent");
                 }
               }
+          
 
-            } else { // received an uncorrupted ACK
+            } 
 
-              // if the packet has already been ACKed, then the receiver is confused/received a corrupted packet
-              if(packetStatusCode.get(ackNum) == 3){
+            else {  // received an uncorrupted ACK
+              boolean lostFirst = false;
+          // get the ACK number of the packet
+              int ackNum = receivedPacket.getAcknum();
 
-                   // for all the packets in the current window
-                  for(int i = 0; i < currentWindow.size(); i++){
+              if(timerOn)
+              {
+                  timeline.stopTimer();
+                  timerOn = false;
+              }
 
-                    // that have been sent but not yet ACKed
-                    if(packetStatusCode.get(i) == 2){
-
-                      // fetch packet object from hash map with the ack num
-                      Packet resend = packets.get(ackNum);
-
-                      networkLayer.sendPacket(resend, Event.RECEIVER);
-
-                      System.out.println("Packet " + ackNum + "has been resent");
-                    }
-                  }
-
-                }
+              //if first pkt was lost and receive an ACK for -1
+              if(ackNum == -1)
+              {
+                Packet firstresend = packets.get(0);
+                networkLayer.sendPacket(firstresend, Event.RECEIVER);
+                lostFirst = true;
+                System.out.println("Packet " + 0 + " has been lost or corrupted and is being resent");
+              }
+              if(!lostFirst)
+              {
+            
               // if sent but unACKed
               if(packetStatusCode.get(ackNum) == 2){
                 System.out.println("ACK received for Packet " + ackNum);
@@ -321,11 +319,30 @@ public class SenderTransport
                     packetStatusCode.set(j, 3);
                     moveWindow(j);
                   }
-                 }
-
-                
+                 } 
                 }
+          // if the packet has already been ACKed, then the receiver is confused/received a corrupted packet
+              if(packetStatusCode.get(ackNum) == 3){
+
+                   // for all the packets in the current window
+                  for(int i = 0; i < currentWindow.size(); i++){
+
+                    // that have been sent but not yet ACKed
+                    if(packetStatusCode.get(i) == 2){
+
+                      // fetch packet object from hash map with the ack num
+                      Packet resend = packets.get(ackNum);
+
+                      networkLayer.sendPacket(resend, Event.RECEIVER);
+
+                      System.out.println("Packet " + ackNum + " has been resent");
+                    }
+                  }
+
+                }
+
               }
+            }
           }
     }
 

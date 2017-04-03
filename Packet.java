@@ -77,10 +77,13 @@ public class Packet{
         String message = msg.getMessage();
         byte[] bytes = message.getBytes();
         int sum = bytes[0];
+        sum = sum ^ acknum;
+        sum = sum ^ seqnum;
         for(int i = 0; i < bytes.length; i++)
         {
             sum = sum ^ bytes[i];
         }
+
         return sum;
     }
     
