@@ -155,7 +155,7 @@ public class ReceiverTransport
                 System.out.println("Receiver has just received packet " + packetSeqNum);
                 Packet resend=null;
                 packetStatusCode.add(1);
-                gbnExpectedSeq++;
+                
 
                 boolean gap = false;
                 System.out.println("Packet " + packetSeqNum + " is not corrupt.");
@@ -193,6 +193,7 @@ public class ReceiverTransport
                     packetStatusCode.set(packetSeqNum, 2);
                     System.out.println("ACK sent for Packet " + packetSeqNum);
                     ra.receiveMessage(pkt.getMessage());
+                    gbnExpectedSeq++;
                 }
             }       
         }      
