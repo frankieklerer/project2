@@ -321,7 +321,7 @@ public class SenderTransport
                   }
                  } 
                 }
-      // if the packet has already been ACKed, then the receiver is confused/received a corrupted packet
+          // if the packet has already been ACKed, then the receiver is confused/received a corrupted packet
               if(packetStatusCode.get(ackNum) == 3){
 
                    // for all the packets in the current window
