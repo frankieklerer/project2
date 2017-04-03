@@ -128,8 +128,6 @@ public class SenderTransport
         // set the sent boolean to false
         boolean sent = false;
 
-        
-
         // for every packet in the status code array
         for(int i = 0; i < packetStatusCode.size(); i++){
 
@@ -242,8 +240,6 @@ public class SenderTransport
 
         }else{ // using GBN
 
-            
-
             // if the packet is corrupt
             if(receivedPacket.isCorrupt()){
 
@@ -252,31 +248,32 @@ public class SenderTransport
 
               analyzeCurrentWindow();
 
-              // for all the packets in the current window
+                   // for all the packets in the current window
               for(int i = 0; i < currentWindow.size(); i++){
+
+                // get the packet number of the packet in current window
+                int packetNum = currentWindow.get(i).getSeqnum();
 
                 // that have been sent but not yet ACKed
                 if(packetStatusCode.get(i) == 2){
-                 // int tempseq = i+1;
-                  // fetch packet object from hash map with the ack num
-                  Packet resend = packets.get(i);
+
+                  // get the packet object to be resent
+                  Packet resend = packets.get(packetNum);
 
                   networkLayer.sendPacket(resend, Event.RECEIVER);
+
+                  //System.out.println("Packet " + toBeResent.getSeqnum() + " has been resent");
+                  System.out.println("Packet " + packetNum + " has been resent");
 
                   // re starts timer for oldest unACKed packet
                   if(!timerOn){
                     timeline.startTimer(50);
                     timerOn = true;
                   }
+                    }
+                  }
 
-                  System.out.println("Packet " + i + " has been resent");
-                }
-              }
-          
-
-            } 
-
-            else {  // received an uncorrupted ACK
+            } else {  // received an uncorrupted ACK
               boolean lostFirst = false;
           // get the ACK number of the packet
               int ackNum = receivedPacket.getAcknum();
@@ -326,21 +323,26 @@ public class SenderTransport
                 // set it as ack
                 moveWindow(ackNum); 
 
-                // check if there are unACKed packets before this packet 
-                for(int j = 0; j < ackNum; j++){
+                  // for all the packets in the current window
+                for(int i = 0; i < currentWindow.size(); i++){
 
-                 // Packet unACKed = currentWindow.get(j);
+                  // get the packet number of the packet in current window
+                  int packetNum = currentWindow.get(i).getSeqnum();
 
-                  // if they still have not been ACKed
-                  if(packetStatusCode.get(j) == 2){
+                  // that have been sent but not yet ACKed
+                  if(packetStatusCode.get(i) == 2){
 
-                    System.out.println("Cumulative ACK for Packet " + j);
+                    System.out.println("Cumulative ACK for Packet " + i);
 
-                    // ack them all
-                    packetStatusCode.set(j, 3);
-                    moveWindow(j);
+                      // ack them all
+                      packetStatusCode.set(i, 3);
+                      moveWindow(i);
+
+
                   }
-                 } 
+                }
+
+               
                 }
           // if the packet has already been ACKed, then the receiver is confused/received a corrupted packet
               if(packetStatusCode.get(ackNum) == 3){
