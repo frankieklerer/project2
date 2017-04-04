@@ -20,6 +20,8 @@ public class ReceiverTransport
     // window size of TCP receiver
     private int windowSizeTCP;
 
+    private int tcpExpectedSeq;
+
     /**
     * Array list to keep track of the sliding window
     * The indexs indicate the packet sequence number and the entries indicate the packet status:
@@ -51,6 +53,7 @@ public class ReceiverTransport
     public void initialize(){
         this.initializeWindow();
         this.gbnExpectedSeq = 0;
+        this.tcpExpectedSeq=0;
     }
 
     /**
@@ -70,29 +73,19 @@ public class ReceiverTransport
             // if the packet is corrupt, resend most recent ACK
             if(pkt.isCorrupt()){ 
 
-               // if the first packet is corrupted
-                if(packetSeqNumTCP == 0){
-                    // resend first packet (-1 because no seq num in ack)
-                    resendTCP = new Packet(new Message(" "), -1, 0);
-                    networkLayer.sendPacket(resendTCP, Event.SENDER);
-                }else{
+                System.out.println("Received packet is corrupt, sending ack for highest in order packet");
 
-                    // find the sequence number of the highest ACKed packet
-                    for (int i = packetSeqNumTCP; i > 0; i--){
-                        if(packetStatusCode.get(i) == 2){
-                            highestSeqNumACKedTCP = i;
-                            break;
-                        }
-                    }
+                // find the packet whose sequence number you are expecting, one minus that is the packet that needs to be reACKed
+                int lastestacked = tcpExpectedSeq;
 
-                    // resend packet with last highest ack (-1 because no seq num in ack)
-                    resendTCP = new Packet(new Message(" "), -1, highestSeqNumACKedTCP);
-                    networkLayer.sendPacket(resendTCP, Event.SENDER);
-                    System.out.println("ACK for packet " + highestSeqNumACKedTCP + " has been resent because it was corrupt.");
-                }
-
+                // resend that last ACKed packet
+                Packet resend = new Packet(new Message(" "), -1, lastestacked);
+                networkLayer.sendPacket(resend, Event.SENDER);
+                System.out.println("ACK for packet " + lastestacked + " has been resent because it was corrupt.");
+            
             // if the packet is not corrupt
             } else {
+
 
                 // for every packet before the received packet
                 for(int i = packetSeqNumTCP; i >0; i--){
@@ -130,6 +123,7 @@ public class ReceiverTransport
                     ra.receiveMessage(pkt.getMessage());
                 }
                 updateBuffer();
+                tcpExpectedSeq++;
             }
 
         }else{ // if using GBN
