@@ -88,14 +88,14 @@ public class SenderTransport
 
         // set the packet sequence number to the global sequence number
         int packetSeqNum = sequenceNumber;
-
-        // set the sent as false
-        boolean sent = false;
         
         // increment sequence number
         sequenceNumber++;
 
-        // for every packet in the status code awway
+        // set the sent as false
+        boolean sent = false;
+        
+        // for every packet in the status code array
         for(int i = 0; i < packetStatusCode.size(); i++){
 
             // if the packet has not yet been sent AND the sequence number is equal to the tcpACKnum
@@ -135,6 +135,7 @@ public class SenderTransport
 
           // if the packets in the window have already been sent, break out of the code
           if(sent){
+            tcpACKnum++;
             break;
           }
         }
@@ -237,7 +238,10 @@ public class SenderTransport
                   System.out.println("ACK received for Packet " + ackNum);
 
                   analyzeCurrentWindow();
-
+                  if(timerOn){
+                      timeline.stopTimer();
+                    timerOn = false;
+                  } 
                   // for all the packets in the current window
                   for(int i = 0; i < currentWindow.size(); i++){
 
@@ -252,16 +256,29 @@ public class SenderTransport
                       // ack them all
                       moveWindow(packetNum);
 
-                      if(!timerOn){
-                      timeline.startTimer(50);
-                      timerOn = true;
+                     
                       }
                     }
+                    moveWindow(ackNum);
                   }
-                  moveWindow(ackNum);
-              }
-          }
+                //restart timer if packets still in flight
+                  for(int j = 0; j < currentWindow.size(); j++){
 
+                  // get the packet number of the packet in current window
+                  int tempseq = currentWindow.get(j).getSeqnum();
+
+                  // that have been sent but not yet ACKed
+                  if(packetStatusCode.get(tempseq) == 2){
+
+                     if(!timerOn){
+                      timeline.startTimer(50);
+                      timerOn = true;
+                     }
+                    }
+                   }
+    
+              }
+        
         }else{ // using GBN
 
             // if the packet is corrupt
