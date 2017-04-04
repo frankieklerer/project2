@@ -404,6 +404,10 @@ public class SenderTransport
 
                       // ack them all
                       moveWindow(packetNum);
+                      if(!timerOn){
+                      timeline.startTimer(50);
+                      timerOn = true;
+                      }
                     }
                   
                   }
@@ -420,10 +424,10 @@ public class SenderTransport
                     // that have been sent but not yet ACKed
                     if(packetStatusCode.get(packetNum) == 2){
 
-                        if(!timerOn){
-                        timeline.startTimer(50);
-                        timerOn = true;
-                        }
+                      // if(!timerOn){
+                      // timeline.startTimer(50);
+                      // timerOn = true;
+                      // }
                     }
                   }
                 }
@@ -437,73 +441,73 @@ public class SenderTransport
       timerOn = false;
       boolean resent = false;
 
-        if(usingTCP){
+      if(usingTCP){
 
-          System.out.println("Timer for oldest inflight packet has expired, resend oldest unACKed packet");
+        System.out.println("Timer for oldest inflight packet has expired, resend oldest unACKed packet");
+
+        analyzeCurrentWindow();
+
+        // for all the packets in the current window
+        for(int i = 0; i < currentWindow.size(); i++){
+
+          // get the packet number of the packet in current window
+          int packetNum = currentWindow.get(i).getSeqnum();
+
+          // that have been sent but not yet ACKed
+          if(packetStatusCode.get(packetNum) == 2){
+
+            // get the packet object to be resent
+            Packet resend = packets.get(packetNum);
+
+            networkLayer.sendPacket(resend, Event.RECEIVER);
+
+            //System.out.println("Packet " + toBeResent.getSeqnum() + " has been resent");
+            System.out.println("Packet " + packetNum + " has been resent");
+
+            if(!timerOn){
+               timeline.startTimer(50);
+               timerOn = true;
+            }
+
+            resent = true;
+          }
+            
+          if(resent)
+            break;
+        }
+
+      } else { // if using GBN
+
+          //when timeout resend all sent but unacked pkts
+
+          System.out.println("Timer for oldest inflight packet has expired, resend all sent but unacked packets");
 
           analyzeCurrentWindow();
 
           // for all the packets in the current window
-          for(int i = 0; i < currentWindow.size(); i++){
+            for(int i = 0; i < currentWindow.size(); i++){
 
-            // get the packet number of the packet in current window
-            int packetNum = currentWindow.get(i).getSeqnum();
+              // get the packet number of the packet in current window
+              int packetNum = currentWindow.get(i).getSeqnum();
 
-            // that have been sent but not yet ACKed
-            if(packetStatusCode.get(i) == 2){
+              // that have been sent but not yet ACKed
+              if(packetStatusCode.get(packetNum) == 2){
 
-              // get the packet object to be resent
-              Packet resend = packets.get(packetNum);
+                // get the packet object to be resent
+                Packet resend = packets.get(packetNum);
 
-              networkLayer.sendPacket(resend, Event.RECEIVER);
+                networkLayer.sendPacket(resend, Event.RECEIVER);
 
-              //System.out.println("Packet " + toBeResent.getSeqnum() + " has been resent");
-              System.out.println("Packet " + packetNum + " has been resent");
+                //System.out.println("Packet " + toBeResent.getSeqnum() + " has been resent");
+                System.out.println("Packet " + packetNum + " has been resent");
 
-              if(!timerOn){
+                if(!timerOn){
                  timeline.startTimer(50);
                  timerOn = true;
-              }
-
-              resent = true;
-            }
-              
-            if(resent)
-              break;
-          }
-
-        } else { // if using GBN
-
-            //when timeout resend all sent but unacked pkts
-
-            System.out.println("Timer for oldest inflight packet has expired, resend all sent but unacked packets");
-
-            analyzeCurrentWindow();
-
-            // for all the packets in the current window
-              for(int i = 0; i < currentWindow.size(); i++){
-
-                // get the packet number of the packet in current window
-                int packetNum = currentWindow.get(i).getSeqnum();
-
-                // that have been sent but not yet ACKed
-                if(packetStatusCode.get(packetNum) == 2){
-
-                  // get the packet object to be resent
-                  Packet resend = packets.get(packetNum);
-
-                  networkLayer.sendPacket(resend, Event.RECEIVER);
-
-                  //System.out.println("Packet " + toBeResent.getSeqnum() + " has been resent");
-                  System.out.println("Packet " + packetNum + " has been resent");
-
-                  if(!timerOn){
-                   timeline.startTimer(50);
-                   timerOn = true;
-                  }
                 }
               }
-        }
+            }
+      }
     }
 
     /**
@@ -526,12 +530,12 @@ public class SenderTransport
     }
 
     public void analyzeCurrentWindow(){
-        ArrayList<String> toPrint = new ArrayList<String>();
-        for(int i = 0; i < currentWindow.size(); i++){
-            toPrint.add("Packet " + currentWindow.get(i).getSeqnum() + "("  + packetStatusCode.get(i) + ")");
-        }
+      ArrayList<String> toPrint = new ArrayList<String>();
+      for(int i = 0; i < currentWindow.size(); i++){
+          toPrint.add("Packet " + currentWindow.get(i).getSeqnum() + "("  + packetStatusCode.get(i) + ")");
+      }
 
-        System.out.println("Current Window: " + toPrint);
+      System.out.println("Current Window: " + toPrint);
     } 
 
     /**
@@ -557,22 +561,22 @@ public class SenderTransport
     * 1 means you are using TCP
     **/
     public void setProtocol(int protocolType){
-        if(protocolType == 0){
-          usingTCP=false;
-          System.out.println("Congrats! You are using the GBN protocol");
-        }else{
-          usingTCP=true;
-          System.out.println("Congrats! You are using the TCP protocol");
-        }
+      if(protocolType == 0){
+        usingTCP=false;
+        System.out.println("Congrats! You are using the GBN protocol");
+      }else{
+        usingTCP=true;
+        System.out.println("Congrats! You are using the TCP protocol");
+      }
     }
 
     /**
     * Initialize the window size by going through the window size and adding 1 (packet in window but not sent) in the indexs
     **/
     public void initializeWindow() {
-        for(int i = 0; i < windowSize; i++) {
-          System.out.println("Placing status code 1 for packet " + i);
-          packetStatusCode.add(i,1);
-        }
+      for(int i = 0; i < windowSize; i++) {
+        System.out.println("Placing status code 1 for packet " + i);
+        packetStatusCode.add(i,1);
+      }
     }
 }
