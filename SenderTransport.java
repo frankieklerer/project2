@@ -258,7 +258,7 @@ public class SenderTransport
                 int packetNum = currentWindow.get(i).getSeqnum();
 
                 // that have been sent but not yet ACKed
-                if(packetStatusCode.get(i) == 2){
+                if(packetStatusCode.get(packetNum) == 2){
 
                   // get the packet object to be resent
                   Packet resend = packets.get(packetNum);
@@ -307,7 +307,7 @@ public class SenderTransport
                 int packetNum = currentWindow.get(i).getSeqnum();
 
                   // that have been sent but not yet ACKed
-                  if(packetStatusCode.get(i) == 2){
+                  if(packetStatusCode.get(packetNum) == 2){
 
                     // get the packet object to be resent
                     Packet resend = packets.get(packetNum);
@@ -334,7 +334,7 @@ public class SenderTransport
                 int packetNum = currentWindow.get(i).getSeqnum();
 
                 // that have been sent but not yet ACKed
-                if(packetStatusCode.get(i) == 2){
+                if(packetStatusCode.get(packetNum) == 2){
 
                   // get the packet object to be resent
                   Packet resend = packets.get(packetNum);
@@ -371,12 +371,12 @@ public class SenderTransport
                   int packetNum = currentWindow.get(i).getSeqnum();
 
                   // that have been sent but not yet ACKed
-                  if(packetStatusCode.get(i) == 2 && (i < ackNum)){
+                  if(packetStatusCode.get(packetNum) == 2 && (packetNum < ackNum)){
 
-                    System.out.println("Cumulative ACK for Packet " + i);
+                    System.out.println("Cumulative ACK for Packet " + packetNum);
 
                     // ack them all
-                    moveWindow(i);
+                    moveWindow(packetNum);
                   }
                 
                 }
@@ -390,7 +390,7 @@ public class SenderTransport
                 int packetNum = currentWindow.get(i).getSeqnum();
 
                 // that have been sent but not yet ACKed
-                if(packetStatusCode.get(i) == 2){
+                if(packetStatusCode.get(packetNum) == 2){
                     if(!timerOn){
                     timeline.startTimer(50);
                     timerOn = true;
