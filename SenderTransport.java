@@ -194,7 +194,7 @@ public class SenderTransport
     }
 
     /**
-    * Receive an ACK from the receiver
+    * Receive an ACK from the receiver, act accordingly
     **/
     public void receiveMessage(Packet receivedPacket){
 
@@ -271,7 +271,7 @@ public class SenderTransport
               //if pkt is corrupt, resend all sent but unacked messages in current window (2)
               System.out.println("Received ACK is corrupt, resending all sent but unacked packets in window.");
 
-              analyzeCurrentWindow();
+              //analyzeCurrentWindow();
 
                    // for all the packets in the current window
               for(int i = 0; i < currentWindow.size(); i++){
@@ -404,6 +404,7 @@ public class SenderTransport
 
                       // ack them all
                       moveWindow(packetNum);
+
                       if(!timerOn){
                       timeline.startTimer(50);
                       timerOn = true;
@@ -436,6 +437,9 @@ public class SenderTransport
           }
     }
 
+    /**
+    * timer expired method acts on what to do when the timer expires
+    **/
     public void timerExpired(){
 
       timerOn = false;
@@ -445,7 +449,7 @@ public class SenderTransport
 
         System.out.println("Timer for oldest inflight packet has expired, resend oldest unACKed packet");
 
-        analyzeCurrentWindow();
+        //analyzeCurrentWindow();
 
         // for all the packets in the current window
         for(int i = 0; i < currentWindow.size(); i++){
@@ -482,7 +486,7 @@ public class SenderTransport
 
           System.out.println("Timer for oldest inflight packet has expired, resend all sent but unacked packets");
 
-          analyzeCurrentWindow();
+          //analyzeCurrentWindow();
 
           // for all the packets in the current window
             for(int i = 0; i < currentWindow.size(); i++){
