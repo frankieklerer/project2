@@ -72,7 +72,6 @@ public class SenderTransport
       if(usingTCP) {
         // for TCP, set these variables
         tcpACKnum = 0;
-        this.ackCountTCP = new ArrayList<Integer>();
       }else{
           
       }     
@@ -125,7 +124,7 @@ public class SenderTransport
               sent = true;
 
               //initialize the ACK count for the packet to 0
-              ackCountTCP.add(0);
+              ackCountTCP.add(i,0);
 
               if(!timerOn){
                 timeline.startTimer(50);
@@ -208,6 +207,7 @@ public class SenderTransport
 
            //received not corrupted ack. 
           }else {
+
              // get the ACK number of the packet
               int ackNum = receivedPacket.getAcknum();
 
@@ -231,36 +231,35 @@ public class SenderTransport
                   System.out.println("Packet " + ackNum + "has been resent");
                 }
 
-              //if the received packet it sent but not acked
-              }else if(packetStatusCode.get(ackNum) == 2) {
+                //if the received packet it sent but not acked
+                }else if(packetStatusCode.get(ackNum) == 2) {
 
                   System.out.println("ACK received for Packet " + ackNum);
 
-                  // set it as ack
-                  moveWindow(ackNum); 
+                  analyzeCurrentWindow();
 
-                  // check if there are unACKed packets before this packet 
-                  for(int j = 0; j < ackNum; j++){
+                  // for all the packets in the current window
+                  for(int i = 0; i < currentWindow.size(); i++){
 
-                   // Packet unACKed = currentWindow.get(j);
+                    // get the packet number of the packet in current window
+                    int packetNum = currentWindow.get(i).getSeqnum();
 
-                    // if they still have not been ACKed
-                    if(packetStatusCode.get(j) == 2){
+                    // that have been sent but not yet ACKed
+                    if(packetStatusCode.get(packetNum) == 2 && (packetNum < ackNum)){
 
-                        System.out.println("Cumulative ACK for Packet " + j);
+                      System.out.println("Cumulative ACK for Packet " + packetNum);
 
-                        // ack them all
-                        packetStatusCode.set(j, 3);
-                        moveWindow(j);
+                      // ack them all
+                      moveWindow(packetNum);
+
+                      if(!timerOn){
+                      timeline.startTimer(50);
+                      timerOn = true;
+                      }
                     }
                   }
+                  moveWindow(ackNum);
               }
-          }
-
-
-          if(timerOn){
-              timeline.stopTimer();
-              timerOn = false;
           }
 
         }else{ // using GBN
@@ -530,7 +529,6 @@ public class SenderTransport
 
       currentWindow.remove(0);
       System.out.println("Removing packet " + packetAckNum + " from current window");
-
     }
 
     public void analyzeCurrentWindow(){
@@ -556,7 +554,9 @@ public class SenderTransport
       //System.out.println("Window size of " + windowSize);
       this.windowSize=windowSize;
       this.currentWindow = new ArrayList<Packet>(this.windowSize);
+      this.ackCountTCP = new ArrayList<Integer>();
       this.initializeWindow();
+
     }
 
     /**
@@ -578,9 +578,18 @@ public class SenderTransport
     * Initialize the window size by going through the window size and adding 1 (packet in window but not sent) in the indexs
     **/
     public void initializeWindow() {
-      for(int i = 0; i < windowSize; i++) {
-        System.out.println("Placing status code 1 for packet " + i);
-        packetStatusCode.add(i,1);
+
+      if(usingTCP){
+        for(int i = 0; i < windowSize; i++) {
+          System.out.println("Placing status code 1 for packet " + i);
+          packetStatusCode.add(i,1);
+        }
+
+      } else {
+        for(int i = 0; i < windowSize; i++) {
+          System.out.println("Placing status code 1 for packet " + i);
+          packetStatusCode.add(i,1);
+        }
       }
     }
 }

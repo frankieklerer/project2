@@ -1,9 +1,2 @@
 Message0
 Message1
-msg 2
-msg 3
-msg 4
-msg 5
-msg 6
-msg 7
-msg 6
