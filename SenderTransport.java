@@ -9,11 +9,24 @@ public class SenderTransport
 {
     private NetworkLayer networkLayer;
     private Timeline timeline;
+
+    // window size of the sender
     private int windowSize;
+
+    // boolean indicating whether the protocol is TCP or not
     private boolean usingTCP;
+
+    // global sequence number for outgoing packets
     private int sequenceNumber;
+
+    // boolean indicating if the timer for the oldest sent packet is on or not
     private boolean timerOn;
+
+    // keeps track of what the expected ACk number is  
     private int tcpACKnum;
+
+    // array list that keeps trac of for many times a packet has been ACKed
+    // helps look for Triple Duplicate ACK
     private ArrayList<Integer> ackCountTCP;
 
     /**
@@ -30,7 +43,7 @@ public class SenderTransport
     private ArrayList<Packet> currentWindow; 
 
     /**
-    * Array list of Message objects whose indexs correspond to packet sequence number
+    * Array list of Packet objects whose indexs correspond to packet sequence number
     **/
     private HashMap<Integer, Packet> packets; 
 
@@ -46,6 +59,9 @@ public class SenderTransport
        
     }
 
+    /**
+    * Initialize method sets all sequence number
+    **/
     public void initialize(){
       // set the sequence number to 0
       this.sequenceNumber = 0;
@@ -62,6 +78,10 @@ public class SenderTransport
       }     
     }
 
+    /**
+    * Send Message method which takes in a Message object and sends a packet depending 
+    * on the protocol
+    **/
     public void sendMessage(Message msg){
 
       // if the protocol is TCP
@@ -157,16 +177,18 @@ public class SenderTransport
               // set the sent variable to true
               sent = true;
 
+              // if the timer isn't already on, turn it on
+              // should only turn on for the first packet sent
               if(!timerOn){
                 timeline.startTimer(50);
                 timerOn = true;
               }
             }
 
-        if(sent){
-          break;
-        }
-
+            // don't send a packet more than once
+            if(sent){
+              break;
+            }
         }
       }
     }
@@ -277,24 +299,27 @@ public class SenderTransport
               }
 
             } else {  // received an uncorrupted ACK
+
               if(timerOn){
                   timeline.stopTimer();
                   timerOn = false;
-               }
+              }
+
               boolean lostFirst = false;
 
               // get the ACK number of the packet
               int ackNum = receivedPacket.getAcknum();
 
-
               //if first pkt was lost and receive an ACK for -1
               if(ackNum == -1){
                 Packet firstresend = packets.get(0);
                 networkLayer.sendPacket(firstresend, Event.RECEIVER);
+
                 if(!timerOn){
                     timeline.startTimer(50);
                     timerOn = true;
-                  }
+                }
+
                 lostFirst = true;
                 System.out.println("Packet " + 0 + " has been lost and is being resent");
 
@@ -321,93 +346,94 @@ public class SenderTransport
                 }
               }
 
+              // if the first packet sent wasn't lost..
               if(!lostFirst){
             
+                 // if the packet has already been ACKed, then the receiver is confused/received a lost/corrupted packet
+                if(packetStatusCode.get(ackNum) == 3){
 
-            // if the packet has already been ACKed, then the receiver is confused/received a lost/corrupted packet
-              if(packetStatusCode.get(ackNum) == 3){
+                  // for all the packets in the current window
+                  for(int i = 0; i < currentWindow.size(); i++){
 
-                   // for all the packets in the current window
-              for(int i = 0; i < currentWindow.size(); i++){
+                    // get the packet number of the packet in current window
+                    int packetNum = currentWindow.get(i).getSeqnum();
 
-                // get the packet number of the packet in current window
-                int packetNum = currentWindow.get(i).getSeqnum();
+                    // that have been sent but not yet ACKed
+                    if(packetStatusCode.get(packetNum) == 2){
 
-                // that have been sent but not yet ACKed
-                if(packetStatusCode.get(packetNum) == 2){
+                      // get the packet object to be resent
+                      Packet resend = packets.get(packetNum);
 
-                  // get the packet object to be resent
-                  Packet resend = packets.get(packetNum);
+                      networkLayer.sendPacket(resend, Event.RECEIVER);
 
-                  networkLayer.sendPacket(resend, Event.RECEIVER);
-
-                  //System.out.println("Packet " + toBeResent.getSeqnum() + " has been resent");
-                  System.out.println("Packet " + packetNum + " has been resent");
-                  
-                  if(!timerOn){
-                    timeline.startTimer(50);
-                    timerOn = true;
-                  }
+                      //System.out.println("Packet " + toBeResent.getSeqnum() + " has been resent");
+                      System.out.println("Packet " + packetNum + " has been resent");
+                      
+                      if(!timerOn){
+                        timeline.startTimer(50);
+                        timerOn = true;
+                      }
 
                     }
                   }
 
                 }
 
-              // if sent but unACKed
-              if(packetStatusCode.get(ackNum) == 2){
-                if(timerOn){
-                  timeline.stopTimer();
-                  timerOn = false;
-                  }
-                System.out.println("ACK received for Packet " + ackNum);
+                // if sent but unACKed
+                if(packetStatusCode.get(ackNum) == 2){
 
-               analyzeCurrentWindow();
+                  if(timerOn){
+                    timeline.stopTimer();
+                    timerOn = false;
+                  }
+
+                  System.out.println("ACK received for Packet " + ackNum);
+
+                  analyzeCurrentWindow();
 
                   // for all the packets in the current window
-                for(int i = 0; i < currentWindow.size(); i++){
+                  for(int i = 0; i < currentWindow.size(); i++){
+
+                    // get the packet number of the packet in current window
+                    int packetNum = currentWindow.get(i).getSeqnum();
+
+                    // that have been sent but not yet ACKed
+                    if(packetStatusCode.get(packetNum) == 2 && (packetNum < ackNum)){
+
+                      System.out.println("Cumulative ACK for Packet " + packetNum);
+
+                      // ack them all
+                      moveWindow(packetNum);
+                    }
+                  
+                  }
+
+                  // set it as ack
+                  moveWindow(ackNum); 
+
+                  //restart timer if packets still in flight
+                  for(int i = 0; i < currentWindow.size(); i++){
 
                   // get the packet number of the packet in current window
-                  int packetNum = currentWindow.get(i).getSeqnum();
+                    int packetNum = currentWindow.get(i).getSeqnum();
 
-                  // that have been sent but not yet ACKed
-                  if(packetStatusCode.get(packetNum) == 2 && (packetNum < ackNum)){
+                    // that have been sent but not yet ACKed
+                    if(packetStatusCode.get(packetNum) == 2){
 
-                    System.out.println("Cumulative ACK for Packet " + packetNum);
-
-                    // ack them all
-                    moveWindow(packetNum);
+                        if(!timerOn){
+                        timeline.startTimer(50);
+                        timerOn = true;
+                        }
+                    }
                   }
-                
                 }
-                // set it as ack
-                moveWindow(ackNum); 
-
-                //restart timer if packets still in flight
-                for(int i = 0; i < currentWindow.size(); i++){
-
-                // get the packet number of the packet in current window
-                int packetNum = currentWindow.get(i).getSeqnum();
-
-                // that have been sent but not yet ACKed
-                if(packetStatusCode.get(packetNum) == 2){
-                    if(!timerOn){
-                    timeline.startTimer(50);
-                    timerOn = true;
-                  }
-                 }
-                }
-
-               
-                }
-
               }
             }
           }
     }
 
-    public void timerExpired()
-    { 
+    public void timerExpired(){
+
       timerOn = false;
       boolean resent = false;
 
@@ -433,8 +459,6 @@ public class SenderTransport
 
               //System.out.println("Packet " + toBeResent.getSeqnum() + " has been resent");
               System.out.println("Packet " + packetNum + " has been resent");
-            
-        
 
               if(!timerOn){
                  timeline.startTimer(50);
@@ -448,7 +472,8 @@ public class SenderTransport
               break;
           }
 
-        } else {
+        } else { // if using GBN
+
             //when timeout resend all sent but unacked pkts
 
             System.out.println("Timer for oldest inflight packet has expired, resend all sent but unacked packets");
@@ -462,7 +487,7 @@ public class SenderTransport
                 int packetNum = currentWindow.get(i).getSeqnum();
 
                 // that have been sent but not yet ACKed
-                if(packetStatusCode.get(i) == 2){
+                if(packetStatusCode.get(packetNum) == 2){
 
                   // get the packet object to be resent
                   Packet resend = packets.get(packetNum);
