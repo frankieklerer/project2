@@ -5,7 +5,7 @@
 public class ReceiverApplication
 {
     public void receiveMessage(Message msg){
-        System.out.println("from receiver:" + msg.getMessage());
+       // System.out.println("from receiver:" + msg.getMessage());
     }
 
 }
