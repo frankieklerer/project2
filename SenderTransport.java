@@ -210,8 +210,30 @@ public class SenderTransport
           }else {
 
              // get the ACK number of the packet
-              int ackNum = receivedPacket.getAcknum();
+              int ackExpectedNum = receivedPacket.getAcknum();
+              int ackNum = ackExpectedNum-1;
+              boolean lostFirst = false;
 
+              if(ackExpectedNum == -1)
+              {
+                  Packet firstresend = packets.get(0);
+                  networkLayer.sendPacket(firstresend, Event.RECEIVER);
+
+                  if(!timerOn){
+                      timeline.startTimer(50);
+                      timerOn = true;
+                  }
+
+                  lostFirst = true;
+                  System.out.println("Packet 0 has been lost and is being resent");
+              }
+              
+              if(timerOn){
+                      timeline.stopTimer();
+                    timerOn = false;
+                  } 
+              if(!lostFirst)
+              {
               // if the packet has already been sent and ACKed
               if(packetStatusCode.get(ackNum) == 3){
 
@@ -235,13 +257,10 @@ public class SenderTransport
                 //if the received packet it sent but not acked
                 }else if(packetStatusCode.get(ackNum) == 2) {
 
-                  System.out.println("ACK received for Packet " + ackNum);
+                  System.out.println("ACK of " + ackExpectedNum + " received");
 
                   analyzeCurrentWindow();
-                  if(timerOn){
-                      timeline.stopTimer();
-                    timerOn = false;
-                  } 
+
                   // for all the packets in the current window
                   for(int i = 0; i < currentWindow.size(); i++){
 
@@ -276,7 +295,7 @@ public class SenderTransport
                      }
                     }
                    }
-    
+                }
               }
         
         }else{ // using GBN
