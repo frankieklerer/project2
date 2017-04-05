@@ -75,7 +75,7 @@ public class ReceiverTransport
                 {
                     Packet resend = new Packet(new Message(" "), -1, -1);
                     networkLayer.sendPacket(resend, Event.SENDER);
-                    System.out.println("ACK for 0 has been resent because it was corrupt.");
+                    System.out.println("ACK for 0 has been resent because received packet is corrupt");
          
                 }
                 else
@@ -85,7 +85,7 @@ public class ReceiverTransport
                     // resend that last ACKed packet
                     Packet resend = new Packet(new Message(" "), -1, lastestacked);
                     networkLayer.sendPacket(resend, Event.SENDER);
-                    System.out.println("ACK for " + lastestacked + " has been resent because it was corrupt.");
+                    System.out.println("ACK for " + lastestacked + " has been resent because received packet is corrupt");
                 }
                 
             // if the packet is not corrupt
@@ -140,7 +140,7 @@ public class ReceiverTransport
                         // resend packet with last highest ack (-1 because no seq num in ack)
                         resendTCP = new Packet(new Message(" "), -1, highestACK);
                         networkLayer.sendPacket(resendTCP, Event.SENDER);
-                        System.out.println("ACK for " + highestACK + " has been resent because of a gap in the window.");
+                        System.out.println("ACK for " + highestACK + " has been resent becauce receiver has already received this packet");
 
                     }
                     else

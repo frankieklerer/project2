@@ -482,7 +482,7 @@ public class SenderTransport
 
       if(usingTCP){
 
-        System.out.println("Timer for oldest inflight packet has expired, resend oldest unACKed packet");
+        System.out.println("Timer has expired, resend oldest unACKed packet");
 
         //analyzeCurrentWindow();
 
