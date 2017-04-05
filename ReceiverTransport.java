@@ -64,22 +64,18 @@ public class ReceiverTransport
         // if protocol is TCP
         if(usingTCP){
            
-
             // if the packet is corrupt, resend most recent ACK
             if(pkt.isCorrupt()){ 
 
                 System.out.println("Received packet is corrupt, sending ack for highest in order packet");
 
                 // find the packet whose sequence number you are expecting, one minus that is the packet that needs to be reACKed
-                if(tcpExpectedSeq == 0)
-                {
+                if(tcpExpectedSeq == 0){
                     Packet resend = new Packet(new Message(" "), -1, -1);
                     networkLayer.sendPacket(resend, Event.SENDER);
                     System.out.println("ACK for 0 has been resent because it was corrupt.");
          
-                }
-                else
-                {
+                } else {
                     int lastestacked = tcpExpectedSeq+1;
 
                     // resend that last ACKed packet
@@ -126,8 +122,8 @@ public class ReceiverTransport
 
                 if(!waiting){
                     //if ack has already been sent for packet, resend highest acked packet
-                    if(packetStatusCode.get(packetSeqNumTCP) == 2)
-                    {   
+                    if(packetStatusCode.get(packetSeqNumTCP) == 2){
+
                         int highestACK = 0;
                         // find the sequence number of the highest ACKed packet
                         for (int j = 0; j < packetStatusCode.size(); j++){
@@ -142,9 +138,7 @@ public class ReceiverTransport
                         networkLayer.sendPacket(resendTCP, Event.SENDER);
                         System.out.println("ACK for " + highestACK + " has been resent because of a gap in the window.");
 
-                    }
-                    else
-                    {
+                    }else{
                         // if all packets before it have been ACKed
                         int expected = packetSeqNumTCP+1;
                         Packet packetACKTCP = new Packet(new Message(" "), -1, expected);

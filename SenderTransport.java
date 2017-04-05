@@ -214,8 +214,7 @@ public class SenderTransport
               int ackNum = ackExpectedNum-1;
               boolean lostFirst = false;
 
-              if(ackExpectedNum == -1)
-              {
+              if(ackExpectedNum == -1){
                   Packet firstresend = packets.get(0);
                   networkLayer.sendPacket(firstresend, Event.RECEIVER);
 
