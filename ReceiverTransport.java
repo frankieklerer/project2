@@ -92,7 +92,16 @@ public class ReceiverTransport
                         }
                     }
 
-                    int lastACKedPacketSeqNum = highestACK+1;
+                    int lastACKedPacketSeqNum;
+                    if(highestACK == 0)
+                    {
+                        lastACKedPacketSeqNum = 0;
+                    }
+                    else
+                    {
+                        lastACKedPacketSeqNum = highestACK + 1;
+                    }
+                    
 
                     // resend that last ACKed packet
                     Packet resend = new Packet(new Message(" "), -1, lastACKedPacketSeqNum);
@@ -140,7 +149,7 @@ public class ReceiverTransport
                             int temp = packetStatusCode.get(i);
 
                             if( (temp == 2) && (j > highestACK)){
-                                highestACK = j;
+                                highestACK = j+1;
                             }
                         }
 

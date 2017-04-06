@@ -105,20 +105,21 @@ public class SenderTransport
               packetStatusCode.set(i, 2);
 
               //create a new packet with the message (-1 because no ack num)
-              Packet newPacket = new Packet(msg, i,-1);
-
+              Packet storePacket = new Packet(msg, i,-1);
+              Packet sendPacket = new Packet(msg, i, -1);
+              
               // add packet to current window
-              currentWindow.add(newPacket);
+              currentWindow.add(storePacket);
 
              // analyzeCurrentWindow();
 
               // place new packet in hash map with associated sequence number
-              packets.put(i, newPacket);
+              packets.put(i, storePacket);
 
               System.out.println("Packet " + i + " has been sent.");
 
               // send the packet to the network layer
-              networkLayer.sendPacket(new Packet(msg, i,-1), Event.RECEIVER);
+              networkLayer.sendPacket(sendPacket, Event.RECEIVER);
 
               // set sent as true
               sent = true;
@@ -161,18 +162,19 @@ public class SenderTransport
               packetStatusCode.set(i, 2);
 
               //create a new packet with the message (-1 because no ack num)
-              Packet newPacket = new Packet(msg, i,-1);
+              Packet storePacket = new Packet(msg, i,-1);
+              Packet sendPacket = new Packet(msg, i, -1);
 
               // add packet to current window
-              currentWindow.add(newPacket);
+              currentWindow.add(storePacket);
 
               // place new packet in hash map with associated sequence number
-              packets.put(i, newPacket);
+              packets.put(i, storePacket);
 
               System.out.println("Packet " + i + " has been sent.");
 
               // send the packet to the network layer
-              networkLayer.sendPacket(newPacket, Event.RECEIVER);
+              networkLayer.sendPacket(sendPacket, Event.RECEIVER);
 
               // set the sent variable to true
               sent = true;
@@ -207,6 +209,10 @@ public class SenderTransport
             System.out.println("Received ACK is corrupt, wait for timeout or duplicate acks.");
 
           }else{ //received not corrupted ack. 
+              if(timerOn){
+                  timeline.stopTimer();
+                  timerOn = false;
+                }
 
               // get the ACK number of the packet
               int ackExpectedNum = receivedPacket.getAcknum();
@@ -221,7 +227,7 @@ public class SenderTransport
               if(ackExpectedNum == 0){
 
                 // resend the first packet
-                Packet firstresend = packets.get(0);
+                Packet firstresend = new Packet(packets.get(0).getMessage(), packets.get(0).getSeqnum(), -1);
                 networkLayer.sendPacket(firstresend, Event.RECEIVER);
 
                 // start the timer for it
@@ -249,7 +255,7 @@ public class SenderTransport
                   if(ackCountTCP.get(ackNum) == 3){
 
                     // fetch packet object from hash map with the ack num
-                    Packet resend = packets.get(ackNum);
+                    Packet resend = new Packet(packets.get(ackNum).getMessage(), packets.get(ackNum).getSeqnum(), -1);
 
                     networkLayer.sendPacket(resend, Event.RECEIVER);
 
@@ -319,7 +325,7 @@ public class SenderTransport
                 if(packetStatusCode.get(packetNum) == 2){
 
                   // get the packet object to be resent
-                  Packet resend = packets.get(packetNum);
+                  Packet resend = new Packet(packets.get(packetNum).getMessage(), packets.get(packetNum).getSeqnum(), -1);
 
                   networkLayer.sendPacket(resend, Event.RECEIVER);
 
@@ -348,7 +354,7 @@ public class SenderTransport
 
               //if first pkt was lost and receive an ACK for -1
               if(ackNum == -1){
-                Packet firstresend = packets.get(0);
+                Packet firstresend = new Packet(packets.get(0).getMessage(), packets.get(0).getSeqnum(), -1);
                 networkLayer.sendPacket(firstresend, Event.RECEIVER);
 
                 if(!timerOn){
@@ -398,7 +404,7 @@ public class SenderTransport
                     if(packetStatusCode.get(packetNum) == 2){
 
                       // get the packet object to be resent
-                      Packet resend = packets.get(packetNum);
+                      Packet resend = new Packet(packets.get(packetNum).getMessage(), packets.get(packetNum).getSeqnum(), -1);
 
                       networkLayer.sendPacket(resend, Event.RECEIVER);
 
@@ -497,7 +503,7 @@ public class SenderTransport
           if(packetStatusCode.get(packetNum) == 2){
 
             // get the packet object to be resent
-            Packet resend = packets.get(packetNum);
+            Packet resend = new Packet(packets.get(packetNum).getMessage(), packets.get(packetNum).getSeqnum(), -1);
 
             networkLayer.sendPacket(resend, Event.RECEIVER);
 
@@ -534,7 +540,7 @@ public class SenderTransport
               if(packetStatusCode.get(packetNum) == 2){
 
                 // get the packet object to be resent
-                Packet resend = packets.get(packetNum);
+                Packet resend = new Packet(packets.get(packetNum).getMessage(), packets.get(packetNum).getSeqnum(), -1);
 
                 networkLayer.sendPacket(resend, Event.RECEIVER);
 
@@ -566,6 +572,7 @@ public class SenderTransport
 
       currentWindow.remove(0);
       System.out.println("Removing packet " + packetAckNum + " from current window");
+
     }
 
     public void analyzeCurrentWindow(){
