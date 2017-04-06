@@ -625,9 +625,10 @@ public class SenderTransport
       }
       else{
         for(int i = 0; i < waitingToSend.size(); i++)
-        {
+        { //for all the packets waiting to send, send as many as fit in the window
           if(currentWindow.size() < windowSize)
           {
+            //extract the msg and seq number from packet to send
             Packet resend = waitingToSend.get(i);
             Message msg = resend.getMessage();
             int seqn = resend.getSeqnum();
@@ -641,7 +642,7 @@ public class SenderTransport
             packetStatusCode.set(seqn, 2);
             
             System.out.println("Opening in the window, packet " + seqn + " has been sent.");
-
+            //remove packet because its been sent
             waitingToSend.remove(i);
 
             if(!timerOn){
