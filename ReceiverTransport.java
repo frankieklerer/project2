@@ -129,14 +129,12 @@ public class ReceiverTransport
 
                 System.out.println("Receiver has just received packet " + packetSeqNumTCP);
 
-                //mark packet as received 
-                packetStatusCode.set(packetSeqNumTCP, 2);
 
                 // for every packet before the received packet
                 for(int i = 0; i < packetSeqNumTCP; i++){
 
                     // if there is a packet before it whose ACK you are awaiting
-                    if(packetStatusCode.get(i) == 1){
+                    if((packetStatusCode.get(i) == 1) && (packetSeqNumTCP != i)){
 
                         // must buffer the packet
                         waiting = true;

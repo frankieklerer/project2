@@ -47,6 +47,9 @@ public class SenderTransport
     **/
     private HashMap<Integer, Packet> packets; 
 
+    //packet buffer for when window is full
+    private ArrayList<Packet> waitingToSend;
+
     /**
     * Constructor
     * Sender TL is creater with the NL and intialized
@@ -54,6 +57,7 @@ public class SenderTransport
     public SenderTransport(NetworkLayer networkLayer){
         this.networkLayer=networkLayer;
         this.packetStatusCode = new ArrayList<Integer>();
+        this.waitingToSend = new ArrayList<Packet>();
         this.packets = new HashMap<Integer, Packet>(); 
         this.initialize();
        
@@ -86,6 +90,9 @@ public class SenderTransport
       // if the protocol is TCP
       if(usingTCP){
 
+        //add extra place for overflow of packets
+        packetStatusCode.add(1);
+
         // set the packet sequence number to the global sequence number
         int packetSeqNum = sequenceNumber;
         
@@ -108,28 +115,35 @@ public class SenderTransport
               Packet storePacket = new Packet(msg, i,-1);
               Packet sendPacket = new Packet(msg, i, -1);
               
-              // add packet to current window
-              currentWindow.add(storePacket);
-
              // analyzeCurrentWindow();
 
               // place new packet in hash map with associated sequence number
               packets.put(i, storePacket);
 
-              System.out.println("Packet " + i + " has been sent.");
-
-              // send the packet to the network layer
-              networkLayer.sendPacket(sendPacket, Event.RECEIVER);
-
-              // set sent as true
-              sent = true;
-
               //initialize the ACK count for the packet to 0
               ackCountTCP.add(i,0);
 
-              if(!timerOn){
-                timeline.startTimer(50);
-                timerOn = true;
+              if(currentWindow.size() < windowSize)
+              {
+                // add packet to current window
+                currentWindow.add(storePacket);
+                
+                System.out.println("Packet " + i + " has been sent.");
+
+                // send the packet to the network layer
+                networkLayer.sendPacket(sendPacket, Event.RECEIVER);
+
+                // set sent as true
+                sent = true;
+
+                if(!timerOn){
+                  timeline.startTimer(50);
+                  timerOn = true;
+                }
+              }
+              else{
+                System.out.println("Window is currently full, storing packet " + i + " , will try to resend later.");
+                waitingToSend.add(storePacket);
               }
 
             }
@@ -143,6 +157,9 @@ public class SenderTransport
 
       }else{ //if the protocol is GBN
 
+        //add extra place for overflow of packets
+        packetStatusCode.add(1);
+        
         // initialize the packet sequence number as the global sequence number
         int packetSeqNum = sequenceNumber;
 
@@ -165,25 +182,32 @@ public class SenderTransport
               Packet storePacket = new Packet(msg, i,-1);
               Packet sendPacket = new Packet(msg, i, -1);
 
-              // add packet to current window
-              currentWindow.add(storePacket);
+             
 
               // place new packet in hash map with associated sequence number
               packets.put(i, storePacket);
 
-              System.out.println("Packet " + i + " has been sent.");
+             if(currentWindow.size() < windowSize && !sent)
+              { 
+                // add packet to current window
+                currentWindow.add(storePacket);
 
-              // send the packet to the network layer
-              networkLayer.sendPacket(sendPacket, Event.RECEIVER);
+                System.out.println("Packet " + i + " has been sent.");
 
-              // set the sent variable to true
-              sent = true;
+                // send the packet to the network layer
+                networkLayer.sendPacket(sendPacket, Event.RECEIVER);
 
-              // if the timer isn't already on, turn it on
-              // should only turn on for the first packet sent
-              if(!timerOn){
-                timeline.startTimer(50);
-                timerOn = true;
+                // set sent as true
+                sent = true;
+
+                if(!timerOn){
+                  timeline.startTimer(50);
+                  timerOn = true;
+                }
+              }
+              else{
+                System.out.println("Window is currently full, storing packet " + i + " , will try to resend later.");
+                waitingToSend.add(storePacket);
               }
             }
 
@@ -583,6 +607,39 @@ public class SenderTransport
       currentWindow.remove(0);
       System.out.println("Removing packet " + packetAckNum + " from current window");
 
+      //try to send packets that were buffered because the window was full
+      this.attemptSend();
+    }
+
+    public void attemptSend()
+    {
+      if(waitingToSend.isEmpty())
+      {
+        //nothing to do here?
+      }
+      else{
+        for(int i = 0; i < waitingToSend.size(); i++)
+        {
+          if(currentWindow.size() < windowSize)
+          {
+            Packet resend = waitingToSend.get(i);
+            Message msg = resend.getMessage();
+            int seqn = resend.getSeqnum();
+
+            networkLayer.sendPacket(new Packet(msg, seqn, -1), Event.RECEIVER);
+            // add packet to current window
+
+            currentWindow.add(waitingToSend.get(i));
+            
+            System.out.println("Opening in the window, packet " + seqn + " has been sent.");
+
+            if(!timerOn){
+              timeline.startTimer(50);
+              timerOn = true;
+            }
+          }
+        }
+      }
     }
 
     public void analyzeCurrentWindow(){
