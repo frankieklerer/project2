@@ -35,6 +35,7 @@ public class SenderTransport
     * 1 means the packet has not yet been sent but it is in the current window
     * 2 means the packet has been sent but its ACK has not been received
     * 3 means the packet has been sent and ACKed
+    * 5 means window was full and packet is waiting to be sent
     **/
     private ArrayList<Integer> packetStatusCode;
 
@@ -90,7 +91,7 @@ public class SenderTransport
       // if the protocol is TCP
       if(usingTCP){
 
-        //add extra place for overflow of packets
+        //add extra place incase of overflow of packets
         packetStatusCode.add(1);
 
         // set the packet sequence number to the global sequence number
@@ -101,12 +102,13 @@ public class SenderTransport
 
         // set the sent as false
         boolean sent = false;
+        boolean stored = false;
         
         // for every packet in the status code array
         for(int i = 0; i < packetStatusCode.size(); i++){
 
-            // if the packet has not yet been sent AND the sequence number is equal to the tcpACKnum
-            if((packetStatusCode.get(i) == 1) && (packetSeqNum == tcpACKnum)){
+            // if the packet has not yet been sent // took out AND the sequence number is equal to the tcpACKnum
+            if(packetStatusCode.get(i) == 1 && i==packetSeqNum){
 
               //create a new packet with the message (-1 because no ack num)
               Packet storePacket = new Packet(msg, i,-1);
@@ -120,7 +122,8 @@ public class SenderTransport
               //initialize the ACK count for the packet to 0
               ackCountTCP.add(i,0);
 
-              if((currentWindow.size() < windowSize) && (!sent))
+
+              if(currentWindow.size() < windowSize)
               {
                 // add packet to current window
                 currentWindow.add(storePacket);
@@ -141,9 +144,11 @@ public class SenderTransport
                   timerOn = true;
                 }
               }
-              else{
+              else if(!stored && !sent){
                 System.out.println("Window is currently full, storing packet " + i + " , will try to resend later.");
                 waitingToSend.add(storePacket);
+                packetStatusCode.set(i,5);
+                stored = true;
               }
 
             }
@@ -157,7 +162,7 @@ public class SenderTransport
 
       }else{ //if the protocol is GBN
 
-        //add extra place for overflow of packets
+        //add extra place in case of overflow of packets
         packetStatusCode.add(1);
         
         // initialize the packet sequence number as the global sequence number
@@ -168,12 +173,13 @@ public class SenderTransport
 
         // set the sent boolean to false
         boolean sent = false;
+        boolean stored = false;
 
         // for every packet in the status code array
         for(int i = 0; i < packetStatusCode.size(); i++){
 
             // if the packet has not yet been sent
-            if(packetStatusCode.get(i) == 1){
+            if(packetStatusCode.get(i) == 1 && i==packetSeqNum){
 
               //create a new packet with the message (-1 because no ack num)
               Packet storePacket = new Packet(msg, i,-1);
@@ -182,7 +188,7 @@ public class SenderTransport
               // place new packet in hash map with associated sequence number
               packets.put(i, storePacket);
 
-             if((currentWindow.size() < windowSize) && (!sent))
+             if(currentWindow.size() < windowSize)
               { 
                 // add packet to current window
                 currentWindow.add(storePacket);
@@ -203,9 +209,11 @@ public class SenderTransport
                   timerOn = true;
                 }
               }
-              else{
+              else if(!stored && !sent){
                 System.out.println("Window is currently full, storing packet " + i + " , will try to resend later.");
                 waitingToSend.add(storePacket);
+                packetStatusCode.set(i,5);
+                stored = true;
               }
             }
 
@@ -412,7 +420,7 @@ public class SenderTransport
 
               // if the first packet sent wasn't lost..
               if(!lostFirst){
-            
+           
                  // if the packet has already been ACKed, then the receiver is confused/received a lost/corrupted packet
                 if(packetStatusCode.get(ackNum) == 3){
 
@@ -599,7 +607,7 @@ public class SenderTransport
       //System.out.println(nextPacketSeqNum);
 
       // expand status code 
-      packetStatusCode.add(1);
+      packetStatusCode.set(nextPacketSeqNum,1);
       System.out.println("Placing status code of 1 for packet " + nextPacketSeqNum);
 
       currentWindow.remove(0);
@@ -630,12 +638,12 @@ public class SenderTransport
             currentWindow.add(waitingToSend.get(i));
 
             // set the packet status code to sent but waiting for ACK
-            packetStatusCode.set(i, 2);
+            packetStatusCode.set(seqn, 2);
             
             System.out.println("Opening in the window, packet " + seqn + " has been sent.");
 
             waitingToSend.remove(i);
-            
+
             if(!timerOn){
               timeline.startTimer(50);
               timerOn = true;

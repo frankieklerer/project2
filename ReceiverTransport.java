@@ -249,7 +249,7 @@ public class ReceiverTransport
                         // resend that ack
                         resend = new Packet(new Message(" "), -1, highestinOrderAck);
                         networkLayer.sendPacket(resend, Event.SENDER);
-                        System.out.println("ACK for packet " + highestinOrderAck + " has been resent because gap in ACKs.");
+                        System.out.println("ACK for packet " + highestinOrderAck + " has been resent because gap in packets.");
 
                         // notify program that it has found a gap 
                         gap = true;
