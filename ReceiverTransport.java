@@ -186,7 +186,7 @@ public class ReceiverTransport
                         networkLayer.sendPacket(resendTCP, Event.SENDER);
                         System.out.println("ACK for " + lastACKedPacketSeqNum + " has been resent becauce receiver has already received this packet");
 
-                    }else{ // if you receive a packet that has not yet been acked
+                    }else if(packetStatusCode.get(packetSeqNumTCP) == 1){ // if you receive a packet that has not yet been acked
 
                         // the ack the receiver needs to send is one plus the received seq num
                         int ackNumToSend = packetSeqNumTCP+1;
