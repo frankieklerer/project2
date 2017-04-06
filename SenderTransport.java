@@ -113,12 +113,12 @@ public class SenderTransport
              // analyzeCurrentWindow();
 
               // place new packet in hash map with associated sequence number
-              packets.put(i, new Packet(msg, i,-1));
+              packets.put(i, newPacket);
 
               System.out.println("Packet " + i + " has been sent.");
 
               // send the packet to the network layer
-              networkLayer.sendPacket(newPacket, Event.RECEIVER);
+              networkLayer.sendPacket(new Packet(msg, i,-1), Event.RECEIVER);
 
               // set sent as true
               sent = true;

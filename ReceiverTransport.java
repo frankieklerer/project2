@@ -97,7 +97,7 @@ public class ReceiverTransport
                     // resend that last ACKed packet
                     Packet resend = new Packet(new Message(" "), -1, lastACKedPacketSeqNum);
                     networkLayer.sendPacket(resend, Event.SENDER);
-                    System.out.println("ACK for " + lastACKedPacketSeqNum + " has been resent because received packet " + tcpExpectedSeq + " is corrupt");
+                    System.out.println("ACK for " + lastACKedPacketSeqNum + " has been resent because received packet is corrupt");
                 }
                 
             // if the packet is not corrupt
@@ -133,17 +133,18 @@ public class ReceiverTransport
                         bufferedPacketList.add(pkt);
                         System.out.println("Buffering packet " + pkt.getSeqnum() );
 
-                        // find the sequence number of the highest ACKed packet
-                        for (int j = packetSeqNumTCP; j > 0; j--){
+                        int highestACK = 0;
 
-                            // if the packet has already been ACKed
-                            if(packetStatusCode.get(j) == 2){
+                        //find the highest acked packet and resend the ack for it
+                        for(int j = 0 ; j < packetStatusCode.size(); j++){
+                            int temp = packetStatusCode.get(i);
 
-                                // set that as the highest ACKed packet
-                                highestSeqNumACKedTCP = j+1; 
-                                break;
+                            if( (temp == 2) && (j > highestACK)){
+                                highestACK = j;
                             }
                         }
+
+                        highestSeqNumACKedTCP = highestACK+1;
 
                         // resend packet with last highest ack (-1 because no seq num in ack)
                         resendTCP = new Packet(new Message(" "), -1, highestSeqNumACKedTCP);
