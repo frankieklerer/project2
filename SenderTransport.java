@@ -206,12 +206,13 @@ public class SenderTransport
             //if pkt is corrupt, wait for timeout.
             System.out.println("Received ACK is corrupt, wait for timeout or duplicate acks.");
 
-           //received not corrupted ack. 
-          }else {
+          }else{ //received not corrupted ack. 
 
-             // get the ACK number of the packet
+              // get the ACK number of the packet
               int ackExpectedNum = receivedPacket.getAcknum();
-              int ackNum = ackExpectedNum-1;
+
+              // ??
+              int ackNum = ackExpectedNum+1; // previously -1?
               boolean lostFirst = false;
 
               if(ackExpectedNum == -1){

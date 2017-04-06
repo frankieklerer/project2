@@ -20,6 +20,7 @@ public class ReceiverTransport
     // window size of TCP receiver
     private int windowSizeTCP;
 
+    // the sequence number the TCP sender is expected (should be the one its about to send out)
     private int tcpExpectedSeq;
 
     /**
@@ -70,35 +71,52 @@ public class ReceiverTransport
                 System.out.println("Received packet is corrupt, sending ack for highest in order packet");
 
                 // find the packet whose sequence number you are expecting, one minus that is the packet that needs to be reACKed
+
+                // if you are expecting the first packet and it is corrupt
                 if(tcpExpectedSeq == 0){
-                    Packet resend = new Packet(new Message(" "), -1, -1);
+
+                    //resend it
+                    Packet resend = new Packet(new Message(" "), 0, -1);
                     networkLayer.sendPacket(resend, Event.SENDER);
                     System.out.println("ACK for 0 has been resent because received packet is corrupt");
          
-                } else {
-                    int lastestacked = tcpExpectedSeq+1;
+                } else { //if you are expecting a packet greater than 0
+
+                    // the next expected sequence number is 1 + the sequence number you just received
+                    int lastACKedPacketSeqNum = tcpExpectedSeq-1;
 
                     // resend that last ACKed packet
-                    Packet resend = new Packet(new Message(" "), -1, lastestacked);
+                    Packet resend = new Packet(new Message(" "), -1, lastACKedPacketSeqNum);
                     networkLayer.sendPacket(resend, Event.SENDER);
-                    System.out.println("ACK for " + lastestacked + " has been resent because received packet is corrupt");
+                    System.out.println("ACK for " + lastACKedPacketSeqNum + " has been resent because received packet " + tcpExpectedSeq + " is corrupt");
                 }
                 
             // if the packet is not corrupt
             } else {
+
+                // 
                 Packet resendTCP=null;
+
+                // The highest sequence number that already been ACKed
                 int highestSeqNumACKedTCP=0;
+
+                // add a 1 to the next slot
                 packetStatusCode.add(1);
 
                 // get the sequence number of the packet
                 int packetSeqNumTCP = pkt.getSeqnum();
+
+                // no buffer
                 boolean waiting = false; 
+
                 System.out.println("Receiver has just received packet " + packetSeqNumTCP);
+
                 // for every packet before the received packet
                 for(int i = 0; i < packetSeqNumTCP; i++){
 
                     // if there is a packet before it whose ACK you are awaiting
                     if(packetStatusCode.get(i) == 1){
+
                         // must buffer the packet
                         waiting = true;
                         
@@ -107,8 +125,12 @@ public class ReceiverTransport
 
                         // find the sequence number of the highest ACKed packet
                         for (int j = packetSeqNumTCP; j > 0; j--){
+
+                            // if the packet has already been ACKed
                             if(packetStatusCode.get(j) == 2){
-                                highestSeqNumACKedTCP = j+1;
+
+                                // set that as the highest ACKed packet
+                                highestSeqNumACKedTCP = j; // previously, j+1 ? 
                                 break;
                             }
                         }
@@ -120,15 +142,21 @@ public class ReceiverTransport
                     }
                 }
 
+                //if did not have to buffer a packet but none of the previous cases have been met
                 if(!waiting){
+
                     //if ack has already been sent for packet, resend highest acked packet
                     if(packetStatusCode.get(packetSeqNumTCP) == 2){
 
                         int highestACK = 0;
+
                         // find the sequence number of the highest ACKed packet
-                        for (int j = 0; j < packetStatusCode.size(); j++){
+                        for (int j = packetSeqNumTCP; j > 0; j--){
+
+                            // if the packet has already been sent
                             if(packetStatusCode.get(j) == 2){
-                                highestACK = j+1;
+
+                                highestACK = j; // previously, j+1?
                                 break;
                             }
                         }
@@ -138,7 +166,7 @@ public class ReceiverTransport
                         networkLayer.sendPacket(resendTCP, Event.SENDER);
                         System.out.println("ACK for " + highestACK + " has been resent becauce receiver has already received this packet");
 
-                    }else{
+                    }else{// ??
                         // if all packets before it have been ACKed
                         int expected = packetSeqNumTCP+1;
                         Packet packetACKTCP = new Packet(new Message(" "), -1, expected);
@@ -161,12 +189,12 @@ public class ReceiverTransport
                 System.out.println("Received packet is corrupt, sending ack for highest in order packet");
 
                 // find the packet whose sequence number you are expecting, one minus that is the packet that needs to be reACKed
-                int lastestacked = gbnExpectedSeq-1;
+                int lastACKedPacketSeqNum = gbnExpectedSeq-1;
 
                 // resend that last ACKed packet
-                Packet resend = new Packet(new Message(" "), -1, lastestacked);
+                Packet resend = new Packet(new Message(" "), -1, lastACKedPacketSeqNum);
                 networkLayer.sendPacket(resend, Event.SENDER);
-                System.out.println("ACK for packet " + lastestacked + " has been resent because it was corrupt.");
+                System.out.println("ACK for packet " + lastACKedPacketSeqNum + " has been resent because packet " + pkt.getSeqnum() + " was corrupt.");
 
             }else{ // if the packet is not corrupt
 

@@ -12,6 +12,9 @@ public class Packet{
 
     Random ran; //random number generator
 
+    /**
+    * Packet constructor that includes check sum field
+    **/
     public Packet(Message msg, int seqnum, int acknum, int checksum){
         this.msg=msg;
         this.seqnum=seqnum;
@@ -21,6 +24,9 @@ public class Packet{
         this.checksum = calculateCheckSum();
     }
 
+    /**
+    * Packet constructor that does not include check sum field
+    **/
     public Packet(Message msg, int seqnum, int acknum){
         this.msg=msg;
         this.seqnum=seqnum;
@@ -29,14 +35,23 @@ public class Packet{
         this.checksum = calculateCheckSum();
     }
 
+    /**
+    * returns the ACK number of the packet
+    **/
     public int getAcknum(){
         return acknum;
     }
     
+    /**
+    * Returns the sequence number of the packet
+    **/
     public int getSeqnum() {
         return seqnum;
     }
 
+    /**
+    * Returns the message of the packet
+    **/
     public Message getMessage(){
         return msg;
     }
@@ -70,17 +85,16 @@ public class Packet{
 
     }
 
-/* Here is a method to calculate the checksum of the message and return an int.
-* We take the message, extract the string, change it into bytes, then sum the bytes
-*/
+    /* Here is a method to calculate the checksum of the message and return an int.
+    * We take the message, extract the string, change it into bytes, then sum the bytes
+    */
     public int calculateCheckSum(){
         String message = msg.getMessage();
         byte[] bytes = message.getBytes();
         int sum = bytes[0];
         sum = sum ^ acknum;
         sum = sum ^ seqnum;
-        for(int i = 0; i < bytes.length; i++)
-        {
+        for(int i = 0; i < bytes.length; i++){
             sum = sum ^ bytes[i];
         }
 
