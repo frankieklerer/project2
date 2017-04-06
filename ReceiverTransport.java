@@ -223,7 +223,7 @@ public class ReceiverTransport
                 // resend that last ACKed packet
                 Packet resend = new Packet(new Message(" "), -1, lastACKedPacketSeqNum);
                 networkLayer.sendPacket(resend, Event.SENDER);
-                System.out.println("ACK for packet " + lastACKedPacketSeqNum + " has been resent because packet " + pkt.getSeqnum() + " was corrupt.");
+                System.out.println("ACK for packet " + lastACKedPacketSeqNum + " has been resent because received packet was corrupt.");
 
             }else{ // if the packet is not corrupt
 
@@ -257,20 +257,35 @@ public class ReceiverTransport
                 }
 
                 if(!gap){ // if no gap was found so that all packects before this one have been ACKed
+                    
+                    if(packetStatusCode.get(packetSeqNum) == 2)
+                    {
+                        // find highest in order ACK
+                        int highack = gbnExpectedSeq-1;
 
-                    // send an ACK
-                    Packet packetACK = new Packet(new Message(" "), -1, packetSeqNum);
-                    networkLayer.sendPacket(packetACK, Event.SENDER);
+                        // resend that ack
+                        resend = new Packet(new Message(" "), -1, highack);
+                        networkLayer.sendPacket(resend, Event.SENDER);
+                        System.out.println("ACK for packet " + highack + " has been resent because gap in packets.");
 
-                    // set it in status code
-                    packetStatusCode.set(packetSeqNum, 2);
-                    System.out.println("ACK sent for Packet " + packetSeqNum);
+                    }
+                    else if(packetStatusCode.get(packetSeqNum) == 1)
+                    {
+                        // send an ACK
+                        Packet packetACK = new Packet(new Message(" "), -1, packetSeqNum);
+                        networkLayer.sendPacket(packetACK, Event.SENDER);
 
-                    // send the message to receiver application
-                    ra.receiveMessage(pkt.getMessage());
+                        // set it in status code
+                        packetStatusCode.set(packetSeqNum, 2);
+                        System.out.println("ACK sent for Packet " + packetSeqNum);
 
-                    // increment the next expected sequence number
-                    gbnExpectedSeq++;
+                        // send the message to receiver application
+                        ra.receiveMessage(pkt.getMessage());
+
+                        // increment the next expected sequence number
+                        gbnExpectedSeq++;
+                    }
+                    
                 }
             }       
         }      
