@@ -457,22 +457,32 @@ public class SenderTransport
 
                   // set it as ack
                   moveWindow(ackNum); 
+                  
 
-                  //restart timer if packets still in flight
-                  for(int i = 0; i < currentWindow.size(); i++){
+                  
+                }
+              }
+              //restart timer if packets still in flight
+              boolean stillSending = false;
+              for(int i = 0; i < currentWindow.size(); i++){
 
-                  // get the packet number of the packet in current window
-                    int packetNum = currentWindow.get(i).getSeqnum();
+              // get the packet number of the packet in current window
+                int packetNum = currentWindow.get(i).getSeqnum();
 
-                    // that have been sent but not yet ACKed
-                    if(packetStatusCode.get(packetNum) == 2){
-
-                      // if(!timerOn){
-                      // timeline.startTimer(50);
-                      // timerOn = true;
-                      // }
-                    }
-                  }
+                // that have been sent but not yet ACKed
+                if(packetStatusCode.get(packetNum) == 2){
+                  if(!timerOn){
+                     timeline.startTimer(50);
+                     timerOn = true;
+                   }
+                   stillSending = true;
+                }
+              }
+              if(!stillSending)
+              {
+                if(timerOn){
+              timeline.stopTimer();
+              timerOn = false;
                 }
               }
             }

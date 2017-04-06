@@ -129,6 +129,9 @@ public class ReceiverTransport
 
                 System.out.println("Receiver has just received packet " + packetSeqNumTCP);
 
+                //mark packet as received 
+                packetStatusCode.set(packetSeqNumTCP, 2);
+
                 // for every packet before the received packet
                 for(int i = 0; i < packetSeqNumTCP; i++){
 
