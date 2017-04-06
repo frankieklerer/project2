@@ -211,92 +211,99 @@ public class SenderTransport
               // get the ACK number of the packet
               int ackExpectedNum = receivedPacket.getAcknum();
 
-              // ??
-              int ackNum = ackExpectedNum+1; // previously -1?
+              // the ack you receive will be the ack for 1 below the received ack number
+              int ackNum = ackExpectedNum-1; 
+
+              // indicating if the first packet was lost or not
               boolean lostFirst = false;
 
+              // if the packet 0 was lost, then it sends an ack for 0 since there is nothing below it
               if(ackExpectedNum == -1){
-                  Packet firstresend = packets.get(0);
-                  networkLayer.sendPacket(firstresend, Event.RECEIVER);
 
-                  if(!timerOn){
-                      timeline.startTimer(50);
-                      timerOn = true;
-                  }
+                // resend the first packet
+                Packet firstresend = packets.get(0);
+                networkLayer.sendPacket(firstresend, Event.RECEIVER);
 
-                  lostFirst = true;
-                  System.out.println("Packet 0 has been lost and is being resent");
+                // start the timer for it
+                if(!timerOn){
+                    timeline.startTimer(50);
+                    timerOn = true;
+                }
+
+                lostFirst = true;
+                System.out.println("Packet 0 has been lost and is being resent");
               }
               
+
               if(timerOn){
-                      timeline.stopTimer();
-                    timerOn = false;
-                  } 
-              if(!lostFirst)
-              {
-              // if the packet has already been sent and ACKed
-              if(packetStatusCode.get(ackNum) == 3){
+                timeline.stopTimer();
+                timerOn = false;
+              }
 
-                // get the amount of times it has been ACKed
-                int count = ackCountTCP.get(ackNum);
+              if(!lostFirst){
 
-                // increment the ACK
-                ackCountTCP.set(ackNum, count++);
+                // if the packet has already been sent and ACKed
+                if(packetStatusCode.get(ackNum) == 3){
 
-                // if the incremented ACK num is 3
-                if(ackCountTCP.get(ackNum) == 3){
+                  // get the amount of times it has been ACKed
+                  int count = ackCountTCP.get(ackNum);
 
-                  // fetch packet object from hash map with the ack num
-                  Packet resend = packets.get(ackNum);
+                  // increment the ACK
+                  ackCountTCP.set(ackNum, count++);
 
-                  networkLayer.sendPacket(resend, Event.RECEIVER);
+                  // if the incremented ACK num is 3 TRIPLE DUPLICATE ACK CASE
+                  if(ackCountTCP.get(ackNum) == 3){
 
-                  System.out.println("Packet " + ackNum + "has been resent");
-                }
+                    // fetch packet object from hash map with the ack num
+                    Packet resend = packets.get(ackNum);
 
-                //if the received packet it sent but not acked
-                }else if(packetStatusCode.get(ackNum) == 2) {
+                    networkLayer.sendPacket(resend, Event.RECEIVER);
 
-                  System.out.println("ACK of " + ackExpectedNum + " received");
+                    System.out.println("Packet " + ackNum + "has been resent");
+                  }
 
-                  analyzeCurrentWindow();
+                  //if the received packet it sent but not acked
+                  }else if(packetStatusCode.get(ackNum) == 2) {
 
-                  // for all the packets in the current window
-                  for(int i = 0; i < currentWindow.size(); i++){
+                    System.out.println("ACK of " + ackExpectedNum + " received");
 
-                    // get the packet number of the packet in current window
-                    int packetNum = currentWindow.get(i).getSeqnum();
+                    analyzeCurrentWindow();
 
-                    // that have been sent but not yet ACKed
-                    if(packetStatusCode.get(packetNum) == 2 && (packetNum < ackNum)){
+                    // for all the packets in the current window
+                    for(int i = 0; i < currentWindow.size(); i++){
 
-                      System.out.println("Cumulative ACK for Packet " + packetNum);
+                      // get the packet number of the packet in current window
+                      int packetNum = currentWindow.get(i).getSeqnum();
 
-                      // ack them all
-                      moveWindow(packetNum);
+                      // that have been sent but not yet ACKed
+                      if(packetStatusCode.get(packetNum) == 2 && (packetNum < ackNum)){
 
-                     
+                        System.out.println("Cumulative ACK for Packet " + packetNum);
+
+                        // ack them all
+                        moveWindow(packetNum);
                       }
                     }
-                    moveWindow(ackNum);
+                      moveWindow(ackNum);
                   }
-                //restart timer if packets still in flight
-                  for(int j = 0; j < currentWindow.size(); j++){
 
-                  // get the packet number of the packet in current window
-                  int tempseq = currentWindow.get(j).getSeqnum();
+                  //restart timer if packets still in flight
+                    for(int j = 0; j < currentWindow.size(); j++){
 
-                  // that have been sent but not yet ACKed
-                  if(packetStatusCode.get(tempseq) == 2){
+                    // get the packet number of the packet in current window
+                    int tempseq = currentWindow.get(j).getSeqnum();
 
-                     if(!timerOn){
-                      timeline.startTimer(50);
-                      timerOn = true;
+                      // that have been sent but not yet ACKed
+                      if(packetStatusCode.get(tempseq) == 2){
+
+                         if(!timerOn){
+                          timeline.startTimer(50);
+                          timerOn = true;
+                         }
+                      }
                      }
-                    }
-                   }
                 }
-              }
+            }
         
         }else{ // using GBN
 

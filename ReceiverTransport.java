@@ -76,14 +76,23 @@ public class ReceiverTransport
                 if(tcpExpectedSeq == 0){
 
                     //resend it
-                    Packet resend = new Packet(new Message(" "), 0, -1);
+                    Packet resend = new Packet(new Message(" "), -1, -1);
                     networkLayer.sendPacket(resend, Event.SENDER);
                     System.out.println("ACK for 0 has been resent because received packet is corrupt");
          
                 } else { //if you are expecting a packet greater than 0
 
-                    // the next expected sequence number is 1 + the sequence number you just received
-                    int lastACKedPacketSeqNum = tcpExpectedSeq-1;
+                    int highestACK = 0;
+
+                    for(int i = 0 ; i < packetStatusCode.size(); i++){
+                        int temp = packetStatusCode.get(i);
+
+                        if( (temp == 2) && (i > highestACK)){
+                            highestACK = i;
+                        }
+                    }
+
+                    int lastACKedPacketSeqNum = highestACK+1;
 
                     // resend that last ACKed packet
                     Packet resend = new Packet(new Message(" "), -1, lastACKedPacketSeqNum);
@@ -130,7 +139,7 @@ public class ReceiverTransport
                             if(packetStatusCode.get(j) == 2){
 
                                 // set that as the highest ACKed packet
-                                highestSeqNumACKedTCP = j; // previously, j+1 ? 
+                                highestSeqNumACKedTCP = j+1; 
                                 break;
                             }
                         }
@@ -150,30 +159,35 @@ public class ReceiverTransport
 
                         int highestACK = 0;
 
-                        // find the sequence number of the highest ACKed packet
-                        for (int j = packetSeqNumTCP; j > 0; j--){
+                        for(int i = 0 ; i < packetStatusCode.size(); i++){
+                            int temp = packetStatusCode.get(i);
 
-                            // if the packet has already been sent
-                            if(packetStatusCode.get(j) == 2){
-
-                                highestACK = j; // previously, j+1?
-                                break;
+                            if( (temp == 2) && (i > highestACK)){
+                                highestACK = i;
                             }
                         }
 
-                        // resend packet with last highest ack (-1 because no seq num in ack)
-                        resendTCP = new Packet(new Message(" "), -1, highestACK);
-                        networkLayer.sendPacket(resendTCP, Event.SENDER);
-                        System.out.println("ACK for " + highestACK + " has been resent becauce receiver has already received this packet");
+                        int lastACKedPacketSeqNum = highestACK+1;
 
-                    }else{// ??
-                        // if all packets before it have been ACKed
-                        int expected = packetSeqNumTCP+1;
-                        Packet packetACKTCP = new Packet(new Message(" "), -1, expected);
+                        // resend packet with last highest ack (-1 because no seq num in ack)
+                        resendTCP = new Packet(new Message(" "), -1, lastACKedPacketSeqNum);
+                        networkLayer.sendPacket(resendTCP, Event.SENDER);
+                        System.out.println("ACK for " + lastACKedPacketSeqNum + " has been resent becauce receiver has already received this packet");
+
+                    }else{ // if you receive a packet that has not yet been acked
+
+                        // the ack the receiver needs to send is one plus the received seq num
+                        int ackNumToSend = packetSeqNumTCP+1;
+
+                        // send the packet
+                        Packet packetACKTCP = new Packet(new Message(" "), -1, ackNumToSend);
                         networkLayer.sendPacket(packetACKTCP, Event.SENDER);
+                        System.out.println("ACK sent for " + ackNumToSend);
+
+                        // set status code to ACKed for packet
                         packetStatusCode.set(packetSeqNumTCP, 2);
                         tcpExpectedSeq++;
-                        System.out.println("ACK sent for " + expected);
+                        
                         ra.receiveMessage(pkt.getMessage());
                     }
                    
@@ -250,29 +264,44 @@ public class ReceiverTransport
     // true if all packets in sequence have been received
     // false if waiting for packet so there are buffered packets
     public boolean checkBuffer(){
-        int highestSeqNum=-1;
-        for(int i = 0; i < bufferedPacketList.size(); i++){
-            Packet p = bufferedPacketList.get(i);
-            if(p.getSeqnum() > highestSeqNum){
-                highestSeqNum = p.getSeqnum();
-            }
+        boolean allReceived = false;
 
+        int highestSeqNumInBuffer =0;
+
+        for(int i = 0; i < bufferedPacketList.size(); i++){
+            int temp = bufferedPacketList.get(i).getSeqnum();
+
+            if(temp > highestSeqNumInBuffer){
+                highestSeqNumInBuffer = temp;
+            }
         }
 
-        for(int j =0; j < highestSeqNum; j++){
-            if(packetStatusCode.get(j) == 1){
+        // for all the packets in the buffered packet list
+        for(int j = 0; j < highestSeqNumInBuffer; j++){
+
+            // retrieve the packet object
+            int check = packetStatusCode.get(i);
+
+            if(check == 2){
+                allReceived = true;
+            } else {
                 return false;
             }
         }
 
-        return true;
+        return allReceived;
     }
 
     public void updateBuffer(){
         if(checkBuffer()){
-            //send all packets to upper layer
-        } else {
 
+            for(int i = 0; i < bufferedPacketList.size(); i ++){
+                Packet toDeliver = bufferedPacketList.get(i);
+                ra.receiveMessage(toDeliver.getMessage());
+            }
+
+        } else {
+            System.out.println("The buffer is still waiting for in order packets to arrive.")
         }
     }
 
