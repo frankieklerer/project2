@@ -187,7 +187,7 @@ public class ReceiverTransport
                         // set status code to ACKed for packet
                         packetStatusCode.set(packetSeqNumTCP, 2);
                         tcpExpectedSeq++;
-                        
+
                         ra.receiveMessage(pkt.getMessage());
                     }
                    
@@ -301,7 +301,7 @@ public class ReceiverTransport
             }
 
         } else {
-            System.out.println("The buffer is still waiting for in order packets to arrive.")
+            System.out.println("The buffer is still waiting for in order packets to arrive.");
         }
     }
 
