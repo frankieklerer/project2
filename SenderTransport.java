@@ -100,7 +100,7 @@ public class SenderTransport
         // increment sequence number
         sequenceNumber++;
 
-        // set the sent as false
+        // set the sent & stored as false
         boolean sent = false;
         boolean stored = false;
         
@@ -122,7 +122,7 @@ public class SenderTransport
               //initialize the ACK count for the packet to 0
               ackCountTCP.add(i,0);
 
-
+              //if the window is not full
               if(currentWindow.size() < windowSize)
               {
                 // add packet to current window
@@ -143,12 +143,18 @@ public class SenderTransport
                   timeline.startTimer(50);
                   timerOn = true;
                 }
-              }
-              else if(!stored && !sent){
-                System.out.println("Window is currently full, storing packet " + i + " , will try to resend later.");
-                waitingToSend.add(storePacket);
-                packetStatusCode.set(i,5);
-                stored = true;
+              } //else if the window is full 
+              else {
+                if(!stored && !sent){ //and the message has not been stored or sent yet
+                  System.out.println("Window is currently full, storing packet " + i + " , will try to resend later.");
+                  
+                  //add packet to the waiting to send list
+                  waitingToSend.add(storePacket);
+
+                  //set status to waiting to be sent
+                  packetStatusCode.set(i,5);
+                  stored = true;
+                }
               }
 
             }
@@ -171,7 +177,7 @@ public class SenderTransport
         // increment sequence number
         sequenceNumber++;
 
-        // set the sent boolean to false
+        // set the sent & stored boolean to false
         boolean sent = false;
         boolean stored = false;
 
@@ -188,6 +194,7 @@ public class SenderTransport
               // place new packet in hash map with associated sequence number
               packets.put(i, storePacket);
 
+             //if the window is not full
              if(currentWindow.size() < windowSize)
               { 
                 // add packet to current window
@@ -209,11 +216,17 @@ public class SenderTransport
                   timerOn = true;
                 }
               }
-              else if(!stored && !sent){
-                System.out.println("Window is currently full, storing packet " + i + " , will try to resend later.");
-                waitingToSend.add(storePacket);
-                packetStatusCode.set(i,5);
-                stored = true;
+              else { //if the window is full 
+                if(!stored && !sent){ //and the message has not been stored or sent yet
+                  System.out.println("Window is currently full, storing packet " + i + " , will try to resend later.");
+                  
+                  //add the packet to the waiting to send list
+                  waitingToSend.add(storePacket);
+                  
+                  //set as waiting to send 
+                  packetStatusCode.set(i,5);
+                  stored = true;
+                }
               }
             }
 
