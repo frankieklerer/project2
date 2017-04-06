@@ -76,7 +76,7 @@ public class ReceiverTransport
                 if(tcpExpectedSeq == 0){
 
                     //resend it
-                    Packet resend = new Packet(new Message(" "), -1, -1);
+                    Packet resend = new Packet(new Message(" "), -1, 0);
                     networkLayer.sendPacket(resend, Event.SENDER);
                     System.out.println("ACK for 0 has been resent because received packet is corrupt");
          
@@ -131,6 +131,7 @@ public class ReceiverTransport
                         
                         // add the packet to the buffered list
                         bufferedPacketList.add(pkt);
+                        System.out.println("Buffering packet " + pkt.getSeqnum() );
 
                         // find the sequence number of the highest ACKed packet
                         for (int j = packetSeqNumTCP; j > 0; j--){
@@ -192,7 +193,10 @@ public class ReceiverTransport
                     }
                    
                 }
-                updateBuffer();
+
+                if(!bufferedPacketList.isEmpty()){
+                   updateBuffer();
+                }
             }
 
         }else{ // if using GBN

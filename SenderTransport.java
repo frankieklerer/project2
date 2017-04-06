@@ -218,7 +218,7 @@ public class SenderTransport
               boolean lostFirst = false;
 
               // if the packet 0 was lost, then it sends an ack for 0 since there is nothing below it
-              if(ackExpectedNum == -1){
+              if(ackExpectedNum == 0){
 
                 // resend the first packet
                 Packet firstresend = packets.get(0);
@@ -232,12 +232,6 @@ public class SenderTransport
 
                 lostFirst = true;
                 System.out.println("Packet 0 has been lost and is being resent");
-              }
-              
-
-              if(timerOn){
-                timeline.stopTimer();
-                timerOn = false;
               }
 
               if(!lostFirst){
@@ -265,7 +259,7 @@ public class SenderTransport
                   //if the received packet it sent but not acked
                   }else if(packetStatusCode.get(ackNum) == 2) {
 
-                    System.out.println("ACK of " + ackExpectedNum + " received");
+                    System.out.println("ACK for packet " + ackNum + " received");
 
                     analyzeCurrentWindow();
 
