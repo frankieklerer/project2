@@ -280,7 +280,7 @@ public class ReceiverTransport
         for(int j = 0; j < highestSeqNumInBuffer; j++){
 
             // retrieve the packet object
-            int check = packetStatusCode.get(i);
+            int check = packetStatusCode.get(j);
 
             if(check == 2){
                 allReceived = true;
