@@ -113,7 +113,7 @@ public class SenderTransport
              // analyzeCurrentWindow();
 
               // place new packet in hash map with associated sequence number
-              packets.put(i, newPacket);
+              packets.put(i, new Packet(msg, i,-1));
 
               System.out.println("Packet " + i + " has been sent.");
 
