@@ -420,7 +420,7 @@ public class SenderTransport
                   if(packetStatusCode.get(packetNum) == 2){
 
                     // get the packet object to be resent
-                    Packet resend = packets.get(packetNum);
+                    Packet resend = new Packet(packets.get(packetNum).getMessage(), packets.get(packetNum).getSeqnum(), -1);
 
                     networkLayer.sendPacket(resend, Event.RECEIVER);
 
