@@ -111,7 +111,11 @@ public class SenderTransport
             if(packetStatusCode.get(i) == 1 && i==packetSeqNum){
 
               //create a new packet with the message (-1 because no ack num)
+
+              // one packet gets stored just in case it gets corrupt
               Packet storePacket = new Packet(msg, i,-1);
+
+              // other packet gets sent into network
               Packet sendPacket = new Packet(msg, i, -1);
               
              // analyzeCurrentWindow();
@@ -123,8 +127,8 @@ public class SenderTransport
               ackCountTCP.add(i,0);
 
               //if the window is not full
-              if(currentWindow.size() < windowSize)
-              {
+              if(currentWindow.size() < windowSize){
+
                 // add packet to current window
                 currentWindow.add(storePacket);
 
@@ -139,13 +143,16 @@ public class SenderTransport
                 // set sent as true
                 sent = true;
 
+                //  turn on the timer
                 if(!timerOn){
                   timeline.startTimer(50);
                   timerOn = true;
                 }
-              } //else if the window is full 
-              else {
-                if(!stored && !sent){ //and the message has not been stored or sent yet
+
+              } else { //else if the window is full 
+
+                // if the message hasn't been stored or sent yet
+                if(!stored && !sent){ 
                   System.out.println("Window is currently full, storing packet " + i + " , will try to resend later.");
                   
                   //add packet to the waiting to send list
@@ -195,8 +202,8 @@ public class SenderTransport
               packets.put(i, storePacket);
 
              //if the window is not full
-             if(currentWindow.size() < windowSize)
-              { 
+             if(currentWindow.size() < windowSize){
+
                 // add packet to current window
                 currentWindow.add(storePacket);
                 
@@ -211,13 +218,16 @@ public class SenderTransport
                 // set sent as true
                 sent = true;
 
+                // turn the timer on
                 if(!timerOn){
                   timeline.startTimer(50);
                   timerOn = true;
                 }
-              }
-              else { //if the window is full 
-                if(!stored && !sent){ //and the message has not been stored or sent yet
+
+              }else { //if the window is full 
+
+                //and the message has not been stored or sent yet
+                if(!stored && !sent){ 
                   System.out.println("Window is currently full, storing packet " + i + " , will try to resend later.");
                   
                   //add the packet to the waiting to send list
@@ -452,7 +462,7 @@ public class SenderTransport
                       networkLayer.sendPacket(resend, Event.RECEIVER);
 
                       //System.out.println("Packet " + toBeResent.getSeqnum() + " has been resent");
-                      System.out.println("Packet " + packetNum + " has been resent");
+                      System.out.println("Packet " + packetNum + " has been resent because ACK for " + ackNum + " has already been received.");
                       
                       if(!timerOn){
                         timeline.startTimer(50);
@@ -499,10 +509,7 @@ public class SenderTransport
                   }
 
                   // set it as ack
-                  moveWindow(ackNum); 
-                  
-
-                  
+                  moveWindow(ackNum);   
                 }
               }
               //restart timer if packets still in flight
@@ -521,11 +528,11 @@ public class SenderTransport
                    stillSending = true;
                 }
               }
-              if(!stillSending)
-              {
+
+              if(!stillSending){
                 if(timerOn){
-              timeline.stopTimer();
-              timerOn = false;
+                  timeline.stopTimer();
+                  timerOn = false;
                 }
               }
             }
@@ -630,17 +637,20 @@ public class SenderTransport
       this.attemptSend();
     }
 
-    public void attemptSend()
-    {
-      if(waitingToSend.isEmpty())
-      {
+    // method that checks if the dinwo has spave to attempt to send a incoming packet from sender application
+    public void attemptSend(){
+
+      // if there is nothing waiting to be sent
+      if(waitingToSend.isEmpty()){
         //nothing to do here?
-      }
-      else{
-        for(int i = 0; i < waitingToSend.size(); i++)
-        { //for all the packets waiting to send, send as many as fit in the window
-          if(currentWindow.size() < windowSize)
-          {
+      }else{
+
+        // for every packet waiting to be send, send as many as can fit in the dinwo
+        for(int i = 0; i < waitingToSend.size(); i++){
+
+          // if the current window has space
+          if(currentWindow.size() < windowSize){
+
             //extract the msg and seq number from packet to send
             Packet resend = waitingToSend.get(i);
             Message msg = resend.getMessage();
@@ -667,6 +677,7 @@ public class SenderTransport
       }
     }
 
+    // method that prints packets in current window for debugging purposes
     public void analyzeCurrentWindow(){
       ArrayList<String> toPrint = new ArrayList<String>();
       for(int i = 0; i < currentWindow.size(); i++){
