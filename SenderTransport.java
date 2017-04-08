@@ -262,6 +262,7 @@ public class SenderTransport
             System.out.println("Received ACK is corrupt, wait for timeout or duplicate acks.");
 
           }else{ //received not corrupted ack. 
+            
               if(timerOn){
                   timeline.stopTimer();
                   timerOn = false;
