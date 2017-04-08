@@ -93,12 +93,9 @@ public class ReceiverTransport
                     }
 
                     int lastACKedPacketSeqNum;
-                    if(highestACK == 0)
-                    {
+                    if(highestACK == 0){
                         lastACKedPacketSeqNum = 0;
-                    }
-                    else
-                    {
+                    }else{
                         lastACKedPacketSeqNum = highestACK + 1;
                     }
                     
