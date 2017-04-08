@@ -31,17 +31,16 @@ public class Timeline{
         timerPointer=null;
 
     }
+
     /**
      * Getting next event. It it is a send event, and there are still messages that need to be sent, sending the next one.
      */
-
     public Event returnNextEvent(){
         Event tmp = events.poll();
         if(tmp==null)
             return tmp;
         timeSoFar = tmp.getTime();    
-        if(tmp.getType()==Event.MESSAGESEND && sentSoFar<totalMessagesToSend)
-        {
+        if(tmp.getType()==Event.MESSAGESEND && sentSoFar<totalMessagesToSend) {
             createSendEvent();
             sentSoFar++;
         }
