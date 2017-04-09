@@ -748,13 +748,13 @@ public class SenderTransport
 
       if(usingTCP){
         for(int i = 0; i < windowSize; i++) {
-          System.out.println("Placing status code 1 for packet " + i);
+         // System.out.println("Placing status code 1 for packet " + i);
           packetStatusCode.add(i,1);
         }
 
       } else {
         for(int i = 0; i < windowSize; i++) {
-          System.out.println("Placing status code 1 for packet " + i);
+         // System.out.println("Placing status code 1 for packet " + i);
           packetStatusCode.add(i,1);
         }
       }
