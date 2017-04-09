@@ -453,35 +453,10 @@ public class SenderTransport
               // if the first packet sent wasn't lost..
               if(!lostFirst){
            
-                //  // if the packet has already been ACKed, then the receiver is confused/received a lost/corrupted packet
-                // if(packetStatusCode.get(ackNum) == 3){
-
-                //   // for all the packets in the current window
-                //   for(int i = 0; i < currentWindow.size(); i++){
-
-                //     // get the packet number of the packet in current window
-                //     int packetNum = currentWindow.get(i).getSeqnum();
-
-                //     // that have been sent but not yet ACKed
-                //     if(packetStatusCode.get(packetNum) == 2){
-
-                //       // get the packet object to be resent
-                //       Packet resend = clonePacket(packets.get(packetNum));
-
-                //       networkLayer.sendPacket(resend, Event.RECEIVER);
-
-                //       //System.out.println("Packet " + toBeResent.getSeqnum() + " has been resent");
-                //       System.out.println("Packet " + packetNum + " has been resent because ACK for " + ackNum + " has already been received.");
-                      
-                //       if(!timerOn){
-                //         timeline.startTimer(50);
-                //         timerOn = true;
-                //       }
-
-                //     }
-                //   }
-
-                // }
+                 // if the packet has already been ACKed, then the receiver is confused/received a lost/corrupted packet
+                if(packetStatusCode.get(ackNum) == 3){
+                      System.out.println("ACK for packet " + ackNum + " has already been received.");
+                }
 
                 // if sent but unACKed
                 if(packetStatusCode.get(ackNum) == 2){
