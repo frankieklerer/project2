@@ -31,6 +31,8 @@ public class ReceiverTransport
     **/
     private ArrayList<Integer> packetStatusCode; 
 
+    private ArrayList<Boolean> sentToApp;
+
     // Array list of Packet objects to keep track of which packets are in the current window
     private ArrayList<Packet> currentWindow; 
 
@@ -45,6 +47,7 @@ public class ReceiverTransport
         this.networkLayer=networkLayer;
         this.packetStatusCode = new ArrayList<Integer>();
         this.bufferedPacketList = new ArrayList<Packet>();
+        this.sentToApp = new ArrayList<Boolean>();
         initialize();
     }
 
@@ -61,7 +64,6 @@ public class ReceiverTransport
     * Receiver message method which knows what to do when the receiver receives a packet
     **/
     public void receiveMessage(Packet pkt){ 
-
         // if protocol is TCP
         if(usingTCP){
            
@@ -128,6 +130,7 @@ public class ReceiverTransport
 
                 // add a 1 to the next slot
                 packetStatusCode.add(1);
+                sentToApp.add(false);
 
                 // get the sequence number of the packet
                 int packetSeqNumTCP = pkt.getSeqnum();
@@ -209,7 +212,12 @@ public class ReceiverTransport
                         packetStatusCode.set(packetSeqNumTCP, 2);
                         tcpExpectedSeq++;
 
-                        ra.receiveMessage(pkt.getMessage());
+                        if(sentToApp.get(packetSeqNumTCP) == false)
+                        {
+                            ra.receiveMessage(pkt.getMessage());
+                            sentToApp.set(packetSeqNumTCP, true);
+                        }
+                        
                     }
                    
                 }
@@ -246,6 +254,7 @@ public class ReceiverTransport
 
                 // add a status code of waiting for sender application to end of list
                 packetStatusCode.add(1);
+                sentToApp.add(false);
 
                 // currently no gap
                 boolean gap = false;
@@ -294,7 +303,11 @@ public class ReceiverTransport
                         System.out.println("ACK sent for Packet " + packetSeqNum);
 
                         // send the message to receiver application
-                        ra.receiveMessage(pkt.getMessage());
+                        if(sentToApp.get(packetSeqNum) == false)
+                        {
+                            ra.receiveMessage(pkt.getMessage());
+                            sentToApp.set(packetSeqNum, true);
+                        }
 
                         // increment the next expected sequence number
                         gbnExpectedSeq++;
@@ -302,7 +315,8 @@ public class ReceiverTransport
                     
                 }
             }       
-        }      
+        } 
+
     }
 
     // true if all packets in sequence have been received
@@ -348,7 +362,11 @@ public class ReceiverTransport
             // deliver all those packets to the receiver application
             for(int i = 0; i < bufferedPacketList.size(); i ++){
                 Packet toDeliver = bufferedPacketList.get(i);
-                ra.receiveMessage(toDeliver.getMessage());
+                if(sentToApp.get(toDeliver.getSeqnum()) == false)
+                        {
+                            ra.receiveMessage(toDeliver.getMessage());
+                            sentToApp.set(toDeliver.getSeqnum(), true);
+                        }
             }
 
         } else { // don't touch buffer if not all packets have been acked
@@ -377,6 +395,7 @@ public class ReceiverTransport
             // for the window size, set packet status code to 1 for that
             for(int i = 0; i < windowSizeTCP; i++){
                 packetStatusCode.add(1);
+                sentToApp.add(false);
             }
         }else{
 
@@ -386,6 +405,7 @@ public class ReceiverTransport
             // for the window size, set packet status code to 1 for that
             for(int i = 0; i < windowSizeGBN; i++){
                 packetStatusCode.add(1);
+                sentToApp.add(false);
             }
             ///System.out.println(packetStatusCode);
         }
